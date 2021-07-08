@@ -1,0 +1,26 @@
+#! /bin/sh
+
+root_file=MBRoot
+
+# Locate the root file
+org=$(pwd)
+dir=$org
+while test -n "$dir"
+do
+  if test -f "$dir/$root_file"; then
+    ROOT_MAKE="$dir/$root_file"
+    break
+  fi
+  dir=${dir%/*}
+done
+
+if test -z "$ROOT_MAKE"; then
+  echo "$0: Could not find <$root_file>!"
+  exit 1
+fi
+
+root_dir=$(dirname "$ROOT_MAKE")
+local_dir=${org#$root_dir/}
+
+${MAKE-make} -C "$root_dir" MK_LOCAL_DIR="$local_dir" "$@"
+

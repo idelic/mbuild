@@ -1,0 +1,28 @@
+
+MK_CXXFLAGS = $(MK_GCC_CXXFLAGS) $(CXXFLAGS)
+MK_CPPFLAGS = $(MK_GCC_CPPFLAGS) $(CPPFLAGS)
+MK_LDFLAGS  = $(MK_GCC_LDFLAGS) $(LDFLAGS)
+
+MK_GCC_COMMON_FLAGS := -g -pipe -MMD -MP -MT $@
+
+# Flags for executables
+MK_LINK_ORIGIN := -Wl,-z -Wl,origin -Wl,-rpath=\$$ORIGIN/../lib
+MK_LINK_BUILDID := -Wl,--build-id=sha1
+
+MK_LINK_EXE := $(MK_LINK_ORIGIN) $(MK_LINK_BUILDID)
+
+MK_GCC_CXXFLAGS.debug    := -ggdb3
+MK_GCC_CXXFLAGS.release  := -O3
+MK_GCC_CXXFLAGS.profile  := $(MK_GCC_CXXFLAGS.release)
+MK_GCC_CXXFLAGS.coverage := --coverage
+
+MK_GCC_CPPFLAGS.debug    := -DMK_BUILD_DEBUG=1
+MK_GCC_CPPFLAGS.release  := -DMK_BUILD_RELEASE=1 -DNDEBUG
+MK_GCC_CPPFLAGS.profile  := -DMK_BUILD_PROFILE=1
+MK_GCC_CPPFLAGS.coverage := -DMK_BUILD_COVERAGE=1
+
+mk.toolset.c++.compiler := $(CXX)
+mk.toolset.c++.ar := $(AR)
+mk.toolset.c++.linker := $(CXX)
+mk.toolset.c++.cpp := $(CXX) -E
+mk.toolset.c++.cflags.debug := $(MK_CXXFLAGS) 
