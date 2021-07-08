@@ -1,6 +1,5 @@
 
 MK_ROOT_DIR := $(CURDIR)
-$(info MK_ROOT_DIR = $(MK_ROOT_DIR))
 
 true  := T
 false :=
@@ -12,6 +11,7 @@ MK_HASH   != printf '\x23'
 MK_COMMA  := ,
 MK_OP     := (
 MK_CP     := )
+MK_SQUOTE := '
 
 define MK_NL
 
@@ -23,6 +23,7 @@ MK_SP2 = $(MK_SP1)$(MK_SP1)
 
 mk-begins-with = $(filter $1%,$2)
 
+mk-squote = $(subst $(MK_SQUOTE),'\'',$1)
 mk-under-root = $(call mk-begins-with,$(MK_ROOT_DIR),$(abspath $1))
 
 # Like $(dir), but gets rid of the trailing slash

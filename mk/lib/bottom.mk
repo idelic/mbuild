@@ -3,12 +3,10 @@
 ifeq ($(MK_SUBDIRS),)
   MK_SUBDIRS := $(patsubst ./%/,%,$(dir $(call mk-find-files,.,local.mk)))
 endif
-$(info SUBDIRS: $(MK_SUBDIRS))
-
 ifdef MK_SUBDIRS_EXCLUDED
   MK_SUBDIRS := $(filter-out $(MK_SUBDIRS_EXCLUDED),$(MK_SUBDIRS))
 endif
-$(info SUBDIRS: $(MK_SUBDIRS))
+$(call mk-debug,MK_SUBDIRS = $(MK_SUBDIRS))
 
 # Include all the local build files
 $(foreach dir,$(MK_SUBDIRS),$(call mk-include,$(dir)/local.mk))
@@ -20,8 +18,6 @@ MK_ALL_TARGETS := \
 
 $(call mk-debug,MK_ALL_TARGETS = $(MK_ALL_TARGETS))
 
-$(foreach v,$(call mk-vars-named,%.location),$(info $(flavor $v)))
-
 # Register all targets
 $(foreach t,$(MK_ALL_TARGETS),$(call mk-target-register,$t,$(call mk-kind-from-name,$t)))
 
@@ -30,15 +26,16 @@ MK_LANGUAGES := $(patsubst mk-languages.%,%,$(call mk-vars-named,mk-languages.%)
 
 # Then we load them
 include $(patsubst %,$(mk.mbuild.dir)/lang/%.mk,$(MK_LANGUAGES))
+$(call mk-debug,include $(patsubst %,$(mk.mbuild.dir)/lang/%.mk,$(MK_LANGUAGES)))
 
 # Load the toolset. This can use MK_LANGUAGES to set things up.
-include $(mk.mbuild.dir)/toolset/$(MK_TOOLSET).mk
+include $(mk.mbuild.dir)/toolset.mk
 
 # Now we're ready to resolve target inter-dependencies
 $(foreach 1,$(MK_ALL_TARGETS),$(mk-target-resolve))
 
 # ...then emit the actual targets
-$(foreach t,$(MK_ALL_TARGETS),$(info EMIT $t)$(call mk-target-emit,$t))
+$(foreach t,$(MK_ALL_TARGETS),$(call mk-target-emit,$t))
 
 # Finally, determine the default target.
 ifdef MK_LOCAL_DIR
@@ -48,3 +45,6 @@ else
 endif
 
 $(call mk-debug,MK_TARGET_ALL = $(MK_TARGET_ALL))
+
+.PHONY: all
+all: $(MK_TARGET_ALL)

@@ -18,6 +18,7 @@ mk_cap_white   := setaf 7
 mk_cap_normal  := sgr0
 
 mk_all_termcap := bold reverse under black red green yellow blue magenta cyan white normal
+mk_colors := black red green yellow blue magenta cyan white
 
 ifeq ($(MAKE_TERMOUT),)
   MK_NO_COLORS := $(true)
@@ -33,10 +34,13 @@ else
 endif
 
 $(foreach cap,$(mk_all_termcap),\
-  $(eval mk-$(cap) = $$($(cap))$$1$$(mk_term_normal)))
+  $(eval mk-$(cap) = $$($(cap))$$1$$(normal)))
 
 mk-tput = $(info $1$(normal))
 mk-bold = $(bold)$1$(normal)
+
+$(foreach c,$(mk_colors),\
+  $(eval mk-b$c = $$(bold)$$($c)$$1$$(normal)))
 
 ifdef mk.mode.help
   MK_VARDOC.MK_NO_COLORS := Disable colored output

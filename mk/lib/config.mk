@@ -18,6 +18,10 @@ endif
 
 MK_TOOLSET ?= gnu
 MK_PLATFORM ?= gnu
+MK_BUILD_TOP ?= bin
+MK_BUILD_TYPE ?= debug
+MK_LINK_TYPE ?= static
+MK_DEFAULT_LANGUAGE ?= c++
 
 include $(mk.mbuild.dir)/sys/$(MK_PLATFORM).mk
 

@@ -7,12 +7,13 @@ MK_MAKE_MK_ := $(lastword $(MAKEFILE_LIST))
 .SECONDEXPANSION:
 .DELETE_ON_ERROR:
 .ONESHELL:
+.DEFAULT_GOAL := all
 
 .MK_ON_LOAD:
 
-MK_LINE_HEAD = $(MK_SP2)[$(call mk-green,%-6s)]
-MK_LINE_BODY = %s
-MK_LINE_FOOT = $(call mk-bold,%*s)
+MK_LINE_HEAD = $(MK_SP2)[$(bold)$(green)%-6s$(normal)]
+MK_LINE_BODY = $(call $4,%s)
+MK_LINE_FOOT = $(bold)%*s$(normal)
 
 # $1=head $2=body $3=footer
 mk-print-command = \
@@ -27,9 +28,11 @@ mk-step = printf '[%-6s] %s' '$1' '$2'
 
 ifeq ($(MK_VERBOSE),1)
   # User wants to see commands without our extra noise
+  mk.quiet :=
   mk-do =
 else
-  mk-do = @$(call mk-print-command,$1,$2,$(MK_TARGET));
+  mk.quiet := @
+  mk-do = @$(call mk-print-command,$1,$2,$(MK_TARGET),$(or $3,mk-normal));
 endif
 
 # Keep things quiet

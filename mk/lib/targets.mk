@@ -12,8 +12,7 @@ define mk-new-target-aux
   $1.$2.this     := $1.$2
   
   # Kind-specific stuff here
-  $$(call mk-$1-new,$1.2,$3)
-  $$(info HERE: $$($1.$2.location))
+  $$(call mk-$1.new,$1.$2,$3)
   
   ifndef $1.$2.goal
     $1.$2.goal := $(or $3,$2)
@@ -52,6 +51,11 @@ define mk-resolve-pulled-flag-aux
 endef
 mk-resolve-pulled-flag = $(eval $(call mk-resolve-pulled-flag-aux,$1,$2,$3))
 
+mk-find-sources = \
+  $(call mk-find-files,$($1.srcdir),$(addprefix *,$(mk.lang.$($1.lang).srcext)))
+
+mk.targets.all :=
+
 ##########################################################################
 ## Target registration
 ##########################################################################
@@ -86,13 +90,9 @@ define mk-target-register-aux
   $$(call mk-lazify,$1.all-pulled)
   
   mk.targets.registered += $1
-  mk.locations[$$($1.location)] += $1
+  mk.targets[$$($1.location)] += $1
 endef
-
 mk-target-register = $(eval $(call mk-target-register-aux,$1,$2))
-
-mk-find-sources = \
-  $(call mk-find-files,$($1.srcdir),$(addprefix *,$(mk.lang.$($1.lang).srcext)))
 
 ##########################################################################
 # Handles resolution of buildable targets (i.e. a target with a location).
@@ -102,9 +102,10 @@ define mk-target-resolve-aux
   ifndef $1.srcdir
     $1.srcdir := $$($1.location)
   endif
+  $1.build-dir ?= $$(MK_BUILD_DIR)
 
   ifdef $1.goal
-    $1.target := $$($1.build-dir)/$$($1.goal)
+    $1.target := $$($1.build-dir)/$$($1.location)/$$($1.goal)
   endif
 
   ifdef $1.lang
@@ -118,42 +119,50 @@ define mk-target-resolve-aux
     $1.all-sources := $$($1.sources) $$($1.extra-sources)
   
     # Object files, if any
-    ifneq (,$$(mk.lang.$$($1.lang).objext))
-      $1.objs := $$(addsufix $$(mk.lang.$($1.lang).objext),$$(basename $$($1.all-sources)))
-    endif
-    $1.objs := $$($1.objs) $$($1.extra-objs)
+    $1.objs := $$(call mk-$$($1.kind).objs,$1,$$($1.all-sources))
+    $1.all-objs := $$($1.objs) $$($1.extra-objs)
   endif
   
 endef
-
 mk-target-resolve = $(eval $(call mk-target-resolve-aux,$1))
-mk.targets.all :=
+
+##########################################################################
+## Emit targets and recipes
+##########################################################################
 
 define mk-target-emit-aux
   ifdef $1.target
     $$($1.target): MK_TARGET := $1
-    $$($1.target): override MK_BUILD_TYPE := $$($1.build-type)
-    $$($1.target): override MK_LINK_TYPE := $$($1.link-type)
+    $$($1.target): MK_KIND := $$($1.kind)
+    $$($1.target): MK_LOCAL_LANG := $$($1.lang)
+    $$($1.target): MK_LOCAL_BUILD_TYPE := $$($1.build-type)
+    $$($1.target): MK_LOCAL_LINK_TYPE := $$($1.link-type)
     $$($1.target): HERE := $$($1.location)
     $$($1.target): THERE := $$($1.there)
 
     ifdef $1.lang
       # Emit compilation and linking rules
-      $(call mk.lang.$$($1.lang).emit-rules,$1)
+      $$(call mk.lang.$$($1.lang).emit-rules,$1)
     endif
     
     .PHONY: $1.build-target
     $1.build-target: $$($1.target)
     
     .PHONY: $$($1.location)@$1
-    $$($1.localtion)@$1: $$($1.build-target)
+    $$($1.location)@$1: $1.build-target
     
-    .PHONY: $$($1.location)@all
-    $$($1.location)@all: $$($1.build-target)
-    $$($1.location)@%: HERE := $$($1.location)
+    .PHONY: $1
+    $1: $1.build-target
 
     mk.targets.$$($1.kind) += $$($1.location)@$1    
     mk.targets.all += $$($1.location)@$1
+    
+    ifndef mk.locations[$$($1.location)]
+      .PHONY: $$($1.location)@all
+      $$($1.location)@%: HERE := $$($1.location)
+      mk.locations[$$($1.location)] :=
+    endif
+    $$($1.location)@all: $$($1.build-target)
     mk.locations[$$($1.location)] += $$($1.location)@$1
     $$(call mk-debug,Emitted $1)
   endif

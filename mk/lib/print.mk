@@ -1,6 +1,5 @@
 
 ifdef mk.mode.print
-  $(info [$(MK_ARG_FIRST)])
   MK_LINE_HEAD = $(MK_SP2)[$(call mk-green,%-6s)]
   MK_LINE_BODY = %s
   MK_LINE_FOOT = $(call mk-bold,%*s)$(normal)
@@ -14,7 +13,7 @@ ifdef mk.mode.print
           H, B, COLS, F \
       }' /dev/null
 
-  all:
+  print-test:
 	@$(call mk-fancy-line,ld,Linking blah blah,lib.target1)
 	@$(call mk-fancy-line,ld,Linking blah blah and whack,lib.long-target1)
 	@$(call mk-fancy-line,ld,Linking blah d f  a q 2 3,lib.get1)
@@ -25,12 +24,12 @@ ifdef mk.mode.print
   mk-show-tree = \
     echo "$(bold)Variables under <$(yellow)$1$(white)>:$(normal)"; \
     $(foreach var,$(sort $(call mk-vars-named,$1.%)),\
-      printf '  $(bold)$(yellow)%-16s$(normal) : %s\n' '$(var)' '$(value $(var))' &&) :
+      printf '  $(bold)$(yellow)%-16s$(normal) : %s\n' '$(var)' '$(call mk-squote,$(value $(var)))' &&) :
 
   mk-expand-tree = \
     echo "$(bold)Variables under <$(yellow)$1$(white)>:$(normal)"; \
     $(foreach var,$(sort $(call mk-vars-named,$1.%)),\
-      printf '  $(bold)$(yellow)%-16s$(normal) : %s\n' '$(var)' '$($(var))' &&) :
+      printf '  $(bold)$(yellow)%-16s$(normal) : %s\n' '$(var)' '$(call mk-squote,$($(var)))' &&) :
 
   .PHONY: show
   show:
@@ -44,7 +43,7 @@ ifdef mk.mode.print
   get:
   ifneq ($(word 2,$(MK_ARG_REST)),)
 	@$(foreach t,$(MK_ARG_REST),\
-          printf '  $(bold)%-24s$(normal) :: %s\n' '$t' '$(value $t)' &&) :
+          printf '  $(bold)%-24s$(normal) :: %s\n' '$t' '$(call mk-squote,$(value $t))' &&) :
   else
 	@echo '$(value $(MK_ARG_REST))'
   endif
@@ -53,7 +52,7 @@ ifdef mk.mode.print
   xget:
   ifneq ($(word 2,$(MK_ARG_REST)),)
 	@$(foreach t,$(MK_ARG_REST),\
-          printf '  $(bold)%-24s$(normal) :: %s\n' '$t' '$($t)' &&) :
+          printf '  $(bold)%-24s$(normal) :: %s\n' '$t' '$(call mk-squote,$($t))' &&) :
   else
 	@echo '$($(MK_ARG_REST))'
   endif
@@ -67,23 +66,19 @@ ifdef mk.mode.print
         $$(info $$(MK_SPACE)  value     : $$(value $1))
         $$(info $$(MK_SPACE)  expansion : $$($1))
       endif
-      ifdef mk.mbuild.location[$1]
+      ifdef mk.locations[$1]
         $$(info Name <$1> is a location:)
-        $$(info $$(MK_SPACE)  targets : $$(mk.mbuild.location[$1]))
+        $$(info $$(MK_SPACE)  targets : $$(mk.locations[$1]))
       endif
-      
+      ifneq ($$(filter $1,$$(mk.targets.all)),)
+        $$(info Name <$1> is a phony target:)
+      endif
+      ifneq ($$(filter $1,$$(MK_ALL_TARGETS)),)
+        $$(info Name <$1> is a target:)
+      endif
     endef
-    var := $(word 1,$(MK_ARG_REST))
-    ifneq (undefined,$(flavor $(var)))
-      $(info Variable <$(bold)$(yellow)$(var)$(normal)>:)
-      $(info $(MK_SPACE)  Origin    : $(origin $(var)))
-      $(info $(MK_SPACE)  Flavor    : $(flavor $(var)))
-      $(info $(MK_SPACE)  Value     : $(value $(var)))
-      $(info $(MK_SPACE)  Expansion : $($(var)))
-    endif
-    ifdef MK_LOCATIONS[
     .PHONY: info
-    info:
+    info: $$(eval $$(call mk-show-info-on,$$(word 1,$$(MK_ARG_REST))))
   endif
 
 endif # mk.mode.print

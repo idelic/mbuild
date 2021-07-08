@@ -12,6 +12,5 @@ define mk.lang.c++.resolve-props-aux
   $$(call mk-resolve-pulled-flags,$1.cxxflags)
 endef
 mk.lang.c++.resolve-props = $(eval $(call mk.lang.c++.resolve-props-aux,$1))
-
+mk.lang.c++.name   := c++
 mk.lang.c++.srcext := .cpp .cc .C .c++
-mk.lang.c++.objext := .o

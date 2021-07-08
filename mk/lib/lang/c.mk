@@ -14,4 +14,3 @@ endef
 mk.lang.c.resolve-props = $(eval $(call mk.lang.c.resolve-props-aux,$1))
 
 mk.lang.c.srcext := .c
-mk.lang.c.objext := .o
