@@ -61,7 +61,7 @@ define mk-emit-std-rules-aux
   $$($1.target): $$($1.all-objs) $$($1.ldlibs) | $$$$(@D)/.
     ifneq ($$(strip $$($1.all-objs) $$($1.ldlibs)),)
 	$$(call mk-do,link,Linking $$(subst $$($1.build-dir),(BIN),$$@),mk-byellow)\
-	$$(mk-toolset-link)
+	$$(mk-toolset-link) && $$(mk-symlink-target)
     endif
 endef
 mk-emit-std-rules = $(eval $(call mk-emit-std-rules-aux,$1))

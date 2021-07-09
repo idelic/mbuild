@@ -16,10 +16,10 @@ MK_GCC_COMMON_CFLAGS  = $(MK_GCC_COMMON_FLAGS) $(MK_CXXFLAGS) -Wall -Wextra
 MK_GCC_COMMON_LDFLAGS = $(MK_LDFLAGS)
 
 # Flags for executables
-ifeq ($(MK_USE_LINK_ORIGIN),1)
+ifeq ($(MK_WITH_LINK_ORIGIN),1)
   MK_LINK_ORIGIN := -Wl,-z -Wl,origin -Wl,-rpath=\$$ORIGIN/../lib
 endif
-ifeq ($(MK_USE_LINK_BUILDID),1)
+ifeq ($(MK_WITH_LINK_BUILDID),1)
   MK_LINK_BUILDID := -Wl,--build-id=sha1
 endif
 
@@ -107,7 +107,7 @@ mk.toolset.c++.link-lib = \
   $(mk.toolset.c++.linker-$(MK_LOCAL_LINK_TYPE)) \
   $(mk.toolset.c++.lflags.$(MK_LOCAL_LINK_TYPE)) $@
 
-ifeq ($(MK_USE_CXX11_ABI),1)
+ifeq ($(MK_WITH_CXX11_ABI),1)
   MK_CXX11_ABI := -D_GLIBCXX_USE_CXX11_ABI=1
 else
   MK_CXX11_ABI := -D_GLIBCXX_USE_CXX11_ABI=0

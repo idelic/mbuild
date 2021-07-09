@@ -29,12 +29,13 @@ mk-new-target = $(eval $(call mk-new-target-aux,$1,$2,$3))
 mk-new-exe = $(call mk-new-target,exe,$1,$2)
 mk-new-lib = $(call mk-new-target,lib,$1,$2)
 
-mk-collect-pulls = \
-  $(info - Collecting $2 for <$1>)$(strip $(foreach req,$1,$(call $0,$(req),$2)) $($1.$2) $1)
-# $($(req).pull),$(call $0,$($(req).pull),$2))) $1)
+ifeq ($(MK_WITH_SYMLINK_TARGET),1)
+  mk-symlink-target = \
+    $(mk.cmd.lnsf)$(call mk-to-top,$(HERE))/$@ $(HERE)/$(@F)
+else
+  mk-symlink-target = :
+endif
 
-mk-collect-use = \
-  $(foreach r,$(call $0,$r,$2))  
 # The 3-step process of creating a target:
 #
 # 1. Registration: The target is added to the build machinery.
@@ -152,6 +153,9 @@ define mk-target-resolve-aux
     $1.all-cleanable := $$(call $1.from-here,$$($1.cleanable))
   else
     $1.all-cleanable :=
+  endif
+  ifeq ($$(MK_WITH_SYMLINK_TARGET),1)
+    $1.all-cleanable += $$($1.location)/$$(notdir $$($1.target))
   endif
   $1.all-cleanable += $$($1.all-objs) $$($1.target) $$($1.extra-cleanable)
   ifdef $1.dist-cleanable
