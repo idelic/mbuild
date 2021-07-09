@@ -81,7 +81,7 @@ define mk-target-register-aux
   endif  
   $1.require += $$($1.reqpull)
   $1.pull += $$($1.reqpull)
-  $1.from-here = $$(call mk-from-top,$$($1.location)/$$1)
+  $1.from-here = $$(if $$1,$$(call mk-from-top,$$($1.location)/$$1))
 
   # Define and lazify. We'll expand later.
   $1.all-required = $$(strip $$($1.require) $$(foreach r,$$($1.require),$$($$(r).all-pulled)))
@@ -101,8 +101,15 @@ mk-target-register = $(eval $(call mk-target-register-aux,$1,$2))
 define mk-target-resolve-aux
   ifndef $1.srcdir
     $1.srcdir := $$($1.location)
+  else
+    $1.srcdir := $$(call $1.from-here,$$($1.srcdir))
   endif
-  $1.build-dir ?= $$(MK_BUILD_DIR)
+  ifndef $1.build-dir
+    $1.build-dir := $$(MK_BUILD_DIR)
+  else
+    $1.build-dir := $$(call $1.from-here,$$($1.build-dir))
+  endif
+  mk.build-dirs[$$($1.build-dir)] += $1
 
   ifdef $1.goal
     $1.target := $$($1.build-dir)/$$($1.location)/$$($1.goal)
@@ -123,6 +130,18 @@ define mk-target-resolve-aux
     $1.all-objs := $$($1.objs) $$($1.extra-objs)
   endif
   
+  ifdef $1.cleanable
+    $1.all-cleanable := $$(call $1.from-here,$$($1.cleanable))
+  else
+    $1.all-cleanable :=
+  endif
+  $1.all-cleanable += $$($1.all-objs) $$($1.target) $$($1.extra-cleanable)
+  ifdef $1.dist-cleanable
+    $1.all-dist-cleanable := $$(call $1.from-here,$$($1.dist-cleanable))
+  else
+    $1.all-dist-cleanable :=
+  endif
+  $1.all-dist-cleanable += $$($1.extra-dist-cleanable)  
 endef
 mk-target-resolve = $(eval $(call mk-target-resolve-aux,$1))
 
@@ -153,6 +172,39 @@ define mk-target-emit-aux
     
     .PHONY: $1
     $1: $1.build-target
+
+    .PHONY: $$(1.location)@$1.clean $$($1.location)@$1.local-clean
+    $$($1.location)@$1.clean: MK_TARGET := $1
+    $$($1.location)@$1.clean: MK_KIND := $$($1.kind)
+    $$($1.location)@$1.clean: MK_LOCAL_LANG := $$($1.lang)
+    $$($1.location)@$1.clean: MK_LOCAL_BUILD_TYPE := $$($1.build-type)
+    $$($1.location)@$1.clean: MK_LOCAL_LINK_TYPE := $$($1.link-type)    
+    $$($1.location)@$1.clean: $$($1.location)@$1.local-clean
+	$$(call mk-do,clean,Cleaning in $$($1.location))\
+	$$(mk-toolset-clean) $$($1.all-cleanable)
+
+    .PHONY: $1.clean
+    $1.clean: $$($1.location)@$1.clean
+    
+    mk.targets.clean += $$($1.location)@$1.clean
+    
+    .PHONY: clean-$$($1.kind)
+    clean-$$($1.kind): $1.clean
+    
+    .PHONY: $$($1.location)@$1.distclean $$($1.location)@$1.local-distclean
+    $$($1.location)@$1.distclean: MK_TARGET := $1
+    $$($1.location)@$1.distclean: MK_KIND := $$($1.kind)
+    $$($1.location)@$1.distclean: MK_LOCAL_LANG := $$($1.lang)
+    $$($1.location)@$1.distclean: MK_LOCAL_BUILD_TYPE := $$($1.build-type)
+    $$($1.location)@$1.distclean: MK_LOCAL_LINK_TYPE := $$($1.link-type)    
+    $$($1.location)@$1.distclean: $1.clean $$($1.location)@$1.local-distclean
+	$$(call mk-do,dclean,Dist-cleaning in $$($1.location))\
+ 	$$(mk-toolset-clean) $$($1.all-dist-cleanable)
+ 	
+    .PHONY: $1.distclean
+    $1.distclean: $$($1.location)@$1.distclean
+    
+    mk.targets.distclean += $$($1.location)@$1.distclean
 
     mk.targets.$$($1.kind) += $$($1.location)@$1    
     mk.targets.all += $$($1.location)@$1

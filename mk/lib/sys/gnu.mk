@@ -5,8 +5,8 @@ mk.mbuild.host := $(or $(MK_BUILD_HOST),$(HOSTNAME),$(shell hostname))
 mk.mbuild.user := $(or $(MK_BUILD_USER),$(LOGNAME),$(shell id -un))
 mk.cmd.ar      := $(or $(AR),ar)
 mk.cmd.mkdirp  := $(or $(MKDIR),mkdir) -p -- 
-mk.cmd.rmf     := $(or $(RM),rm) -f --
-mk.cmd.rmrf    := $(or $(RM),rm) -rf -- 
+mk.cmd.rmf     := $(or $(RM),rm -f) --
+mk.cmd.rmrf    := $(or $(RM),rm -f) -r -- 
 
 # bin/gnu/
 MK_BUILD_DIR = \

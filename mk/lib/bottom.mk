@@ -46,5 +46,16 @@ endif
 
 $(call mk-debug,MK_TARGET_ALL = $(MK_TARGET_ALL))
 
-.PHONY: all
-all: $(MK_TARGET_ALL)
+$(call mk-run-hook,bottom)
+
+define mk-define-top-target
+  .PHONY: $1
+  ifdef MK_LOCAL_DIR
+    $1: $$(filter $$(MK_LOCAL_DIR)@% $$(MK_LOCAL_DIR)/%,$$(mk.targets.$1))
+  else
+    $1: $$(mk.targets.$1)
+  endif
+endef
+
+$(foreach t,$(call mk-in-vars,mk.targets.%),\
+  $(eval $(call mk-define-top-target,$t)))

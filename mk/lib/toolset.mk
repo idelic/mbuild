@@ -4,8 +4,6 @@ define mk-compile-source-rule
   	$$(mk.toolset.$$($1.lang).compile)
 endef
 
-mk-linkable-static = $(filter $(mk.toolset.objext
-
 mk-objext.exe = $(mk.toolset.objext-exe)
 mk-objext.lib = $(mk.toolset.objext-$(MK_LOCAL_LINK_TYPE))
 mk-libext = $(mk.toolset.libext-$(MK_LOCAL_LINK_TYPE))
@@ -30,4 +28,14 @@ mk-toolset-link = \
 
 mk-toolset-preprocess = $(mk.toolset.$(MK_LOCAL_LANG).preprocess)
 
+mk-toolset-clean = $(mk.cmd.rmf)
+
 include $(mk.mbuild.dir)/toolset/$(MK_TOOLSET).mk
+
+mk-depend-files = \
+  $(foreach dir,$(call mk-in-vars,mk.build-dirs[%]),\
+    $(call mk-find-files,$(dir),*.d))
+
+mk-depend-hook = $(info depends)include $(mk-depend-files)
+
+$(call mk-add-hook,bottom,mk-depend-hook)

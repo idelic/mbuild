@@ -40,6 +40,7 @@ mk-to-top = $(foreach f,$1,$(subst $(MK_SPACE),/,$(patsubst %,..,$(subst /, ,$f)
 mk-from-here = $(call mk-from-top,$(addprefix $(or $2,$(HERE))/,$1))
 
 mk-vars-named = $(filter $1,$(.VARIABLES))
+mk-in-vars = $(patsubst $1,%,$(filter $1,$(.VARIABLES)))
 
 mk-shift = $(wordlist 2,$(words $1),$1)
 mk-neq = $(or $(subst x$1,,x$2),$(subst x$2,,x$1))
@@ -62,6 +63,9 @@ mk-wildcard-from = $(patsubst $1/%,%,$(wildcard $(addprefix $1/,$2)))
 mk-lazify = $(eval $1 = $$(eval override $1 := $(value $1))$$($1))
 mk-lazify-all = $(foreach 1,$1,$(mk-lazify))
 mk-poison = $(foreach var,$1,$(eval override $(var) = $$(error Illegal reference to variable <$(var)>)))
+
+mk-add-hook = $(eval mk.hooks.$1 += $2)
+mk-run-hook = $(foreach hook,$(mk.hooks.$1),$(eval $(call $(hook),$1,$2,$3,$4,$5,$6)))
 
 # Drop duplicates but preserve ordering
 mk-unique = $(strip \
@@ -90,5 +94,3 @@ ifeq ($(MK_DEBUG),1)
 else
   mk-debug =
 endif
-
-  
