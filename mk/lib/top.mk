@@ -24,7 +24,7 @@ include $(mk.mbuild.dir)/include.mk
 # Get the target machinery going
 include $(wildcard $(mk.mbuild.dir)/kind/*.mk)
 include $(mk.mbuild.dir)/targets.mk
+include $(mk.mbuild.dir)/help.mk
 include $(mk.mbuild.dir)/print.mk
-include $(mk.mkbuild.dir)/help.mk
 
 endif # MK_TOP_MK_

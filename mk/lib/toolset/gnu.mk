@@ -68,14 +68,15 @@ mk.toolset.linkable-shared := %.o %.a %.so
 # Patterns for objects that can be linked into an executable
 mk.toolset.linkable-exe := $(mk.toolset.linkable-shared)
 
+mk.toolset.include-path := -I
+mk.toolset.include-sys := -isystem
+
 mk.toolset.c++.compiler := $(CXX)
 mk.toolset.c++.version := $(shell $(CXX) -dumpfullversion)
 mk.toolset.c++.linker-static := $(AR) 
 mk.toolset.c++.linker-shared := $(CXX)
 mk.toolset.c++.linker-exe := $(CXX)
 mk.toolset.c++.cpp := $(CXX) -E
-mk.toolset.c++.include-path := -I
-mk.toolset.c++.include-sys := -isysinclude
 mk.toolset.c++.cflags.shared := -fPIC
 mk.toolset.c++.cflags.debug    = $(MK_GCC_COMMON_CFLAGS) $(MK_GCC_CXXFLAGS_DEBUG)
 mk.toolset.c++.cflags.release  = $(MK_GCC_COMMON_CFLAGS) $(MK_GCC_CXXFLAGS_RELEASE)

@@ -77,6 +77,12 @@ mk-unique = $(strip \
 mk-reverse = $(strip \
   $(if $1,$(call $0,$(wordlist 2,$(words $1),$1),$(firstword $1) $2),$2))
 
+mk-boxed = \
+  t=' $1 '; s=`echo "$$t" | sed 's/./─/g'`; \
+  echo "$(blue)┌$$s┐$(normal)"; \
+  echo "$(blue)│$(bold)$(white)$$t$(normal)$(blue)│$(normal)"; \
+  echo "$(blue)└$$s┘$(normal)"; echo
+
 define mk-copy-recursive
 define $1
 $2

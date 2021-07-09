@@ -75,6 +75,7 @@ ifneq ($(mk.make.mode),)
   $(eval $(call mk-make-noop,$(MK_ARG_REST)))
 else
   MK_BUILD_MODE := build
+  mk.mode.build := 1
 endif
 
 endif # MK_MAKE_MK_

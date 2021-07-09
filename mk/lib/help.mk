@@ -8,12 +8,6 @@ MK_HELP_EXT    := pod
 MK_HELP_VIEWER := perldoc
 
 ifdef mk.mode.help
-  mk-boxed = \
-    t=' $1 '; s=$$(echo "$$t" | sed 's/./─/g'); \
-    echo "$(blue)┌$$s┐$(normal)"; \
-    echo "$(blue)│$(bold)$(white)$$t$(normal)$(blue)│$(normal)"; \
-    echo "$(blue)└$$s┘$(normal)"; echo
-
   mk-show-vars = \
     $(if $1,\
       echo '$(bold)Variables$(normal):'; echo; \
@@ -25,7 +19,7 @@ ifdef mk.mode.help
           '' '$(if $(call mk-neq,undefined,$(origin $t)),$(value $t),$(red)--undefined--)' &&) echo)
 
   mk-show-key = \
-    printf '  $(bold)$(yellow)%-$3s$(normal) : %s\n' '$(subst $(MK_COMMA), ,$1)' '$2'
+    printf '  $(bold)$(yellow)%-$3s$(normal) : %s\n' '$(subst |, ,$1)' '$2'
 
   mk-help-topics = \
     $(filter-out _%,$(patsubst mk.help[%][],%,$(call mk-vars-named,mk.help[%][])))
@@ -107,8 +101,8 @@ ifdef mk.mode.help
   mk-help-vars  = $(eval mk.help[$(_MK_HELP_TOPIC)][_vars_] := $1)
 
   mk.help[_help][] := Pseudo-targets to show help on various topics
-  mk.help[_help][help,TOPIC...] := Show help on TOPIC
-  mk.help[_help][vars,NAME...] := Show documentation for all variables starting with NAME
+  mk.help[_help][help|TOPIC...] := Show help on TOPIC
+  mk.help[_help][vars|NAME...] := Show documentation for all variables starting with NAME
   mk.help[help][_vars_] := MK_HELP_PATH MK_HELP_EXT MK_HELP_VIEWER
   MK_VARDOC.MK_HELP_PATH   := Directory for external help files
   MK_VARDOC.MK_HELP_EXT    := Suffix for external help files

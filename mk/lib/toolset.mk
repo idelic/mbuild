@@ -36,6 +36,6 @@ mk-depend-files = \
   $(foreach dir,$(call mk-in-vars,mk.build-dirs[%]),\
     $(call mk-find-files,$(dir),*.d))
 
-mk-depend-hook = $(info depends)include $(mk-depend-files)
+mk-depend-hook = include $(mk-depend-files)
 
 $(call mk-add-hook,bottom,mk-depend-hook)

@@ -51,8 +51,14 @@ define mk-resolve-pulled-flag-aux
 endef
 mk-resolve-pulled-flag = $(eval $(call mk-resolve-pulled-flag-aux,$1,$2,$3))
 
+define mk-localize-pulled-flag-aux
+  $1.all-$2 = $$(strip $$(foreach r,$$($1.all-required),$$(call $$(r).from-here,$$($$(r).$(or $3,pull-$2)))) $$($1.$2))
+  $$(call mk-lazify,$1.all-$2)
+endef
+mk-localize-pulled-flag = $(eval $(call mk-localize-pulled-flag-aux,$1,$2,$3))
+
 mk-find-sources = \
-  $(call mk-find-files,$($1.srcdir),$(addprefix *,$(mk.lang.$($1.lang).srcext)))
+  $(call mk-find-files,$($1.srcdir),$(addprefix *,$(mk-lang-$($1.lang).srcext)))
 
 mk.targets.all :=
 
@@ -81,7 +87,7 @@ define mk-target-register-aux
   endif  
   $1.require += $$($1.reqpull)
   $1.pull += $$($1.reqpull)
-  $1.from-here = $$(if $$1,$$(call mk-from-top,$$($1.location)/$$1))
+  $1.from-here = $$(if $$1,$$(call mk-from-here,$$1,$$($1.location)))
 
   # Define and lazify. We'll expand later.
   $1.all-required = $$(strip $$($1.require) $$(foreach r,$$($1.require),$$($$(r).all-pulled)))
@@ -93,6 +99,18 @@ define mk-target-register-aux
   mk.targets[$$($1.location)] += $1
 endef
 mk-target-register = $(eval $(call mk-target-register-aux,$1,$2))
+
+mk-target-common-info = \
+  $(info $(call mk-bold,  name)      : $($1.name))\
+  $(info $(call mk-bold,  kind)      : $($1.kind))\
+  $(info $(call mk-bold,  location)  : $(if $($1.location),$(call mk-byellow,$($1.location)),$(call mk-bbluw,*system*)))\
+  $(info $(call mk-bold,  build-dir) : $($1.build-dir))\
+  $(info $(call mk-bold,  target)    : $($1.target))\
+  $(info $(call mk-bold,  build-type): $($1.build-type))\
+  $(info $(call mk-bold,  sources)   : $(if $($1.all-sources),$(call mk-byellow,defined),$(call mk-bblack,*none*)))
+
+mk-target-info = \
+  $(if $(mk-$($1.kind).info),$(call mk-$($1.kind).info,$1),$(call mk-target-common-info,$1))  
 
 ##########################################################################
 # Handles resolution of buildable targets (i.e. a target with a location).
@@ -117,7 +135,7 @@ define mk-target-resolve-aux
 
   ifdef $1.lang
     # Resolve compilation/linking flags
-    $$(call mk.lang.$$($1.lang).resolve-props,$1)
+    $$(call mk-lang-$$($1.lang).resolve-props,$1)
 
     # Locate source files
     ifeq (undefined,$$(origin $1.sources))
@@ -142,6 +160,21 @@ define mk-target-resolve-aux
     $1.all-dist-cleanable :=
   endif
   $1.all-dist-cleanable += $$($1.extra-dist-cleanable)  
+  
+  # Populate the lists with targets. We'll define them later.
+  ifdef $1.target
+    mk.targets.clean += $$($1.location)@$1.clean      
+    mk.targets.distclean += $$($1.location)@$1.distclean
+    mk.targets.$$($1.kind) += $$($1.location)@$1    
+    mk.targets.all += $$($1.location)@$1 
+    ifdef mk.mode.print
+      mk.targets.by-kind[$$($1.kind)] += $1
+    endif
+    ifndef mk.locations[$$($1.location)]
+      mk.locations[$$($1.location)] :=
+    endif
+    mk.locations[$$($1.location)] += $$($1.location)@$1
+  endif    
 endef
 mk-target-resolve = $(eval $(call mk-target-resolve-aux,$1))
 
@@ -161,7 +194,7 @@ define mk-target-emit-aux
 
     ifdef $1.lang
       # Emit compilation and linking rules
-      $$(call mk.lang.$$($1.lang).emit-rules,$1)
+      $$(call mk-lang-$$($1.lang).emit-rules,$1)
     endif
     
     .PHONY: $1.build-target
@@ -186,8 +219,6 @@ define mk-target-emit-aux
     .PHONY: $1.clean
     $1.clean: $$($1.location)@$1.clean
     
-    mk.targets.clean += $$($1.location)@$1.clean
-    
     .PHONY: clean-$$($1.kind)
     clean-$$($1.kind): $1.clean
     
@@ -204,18 +235,10 @@ define mk-target-emit-aux
     .PHONY: $1.distclean
     $1.distclean: $$($1.location)@$1.distclean
     
-    mk.targets.distclean += $$($1.location)@$1.distclean
+    .PHONY: $$($1.location)@all
+    $$($1.location)@%: HERE := $$($1.location)
+    $$($1.location)@all: $1.build-target
 
-    mk.targets.$$($1.kind) += $$($1.location)@$1    
-    mk.targets.all += $$($1.location)@$1
-    
-    ifndef mk.locations[$$($1.location)]
-      .PHONY: $$($1.location)@all
-      $$($1.location)@%: HERE := $$($1.location)
-      mk.locations[$$($1.location)] :=
-    endif
-    $$($1.location)@all: $$($1.build-target)
-    mk.locations[$$($1.location)] += $$($1.location)@$1
     $$(call mk-debug,Emitted $1)
   endif
 endef

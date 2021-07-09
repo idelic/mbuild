@@ -3,6 +3,10 @@ ifndef MK_LANG_COMMON_MK_
 
 MK_LANG_COMMON_MK_ := $(lastword $(MAKEFILE_LIST))
 
+mk-lang-info = \
+  $(info $(call mk-bold,  name)   : $(mk-lang-$1.name))\
+  $(info $(call mk-bold,  srcext) : $(mk-lang-$1.srcext))
+
 # 1=lang, 2=srcext, 3=build_dir
 define mk-emit-pattern-rule-aux
   $$(call mk-debug,mk-emit-pattern-rule($1,$2,$3,$4))
@@ -20,12 +24,11 @@ mk-emit-pattern-rule = $(eval $(call mk-emit-pattern-rule-aux,$1,$2,$3,$4))
 
 # 1=lang, 2=build_dir
 mk-emit-pattern-rules = \
-  $(foreach srcext,$(mk.lang.$1.srcext),\
+  $(foreach srcext,$(mk-lang-$1.srcext),\
     $(foreach objext,$(mk.toolset.objext-all),\
-      $(call mk-emit-pattern-rule,$(objext),$(srcext),$(mk.lang.$1.name),$2)))
+      $(call mk-emit-pattern-rule,$(objext),$(srcext),$(mk-lang-$1.name),$2)))
 
 define mk-emit-std-rules-aux
-  $$(call mk-debug,Sources!)
   ifneq ($$($1.all-sources),)
     ifneq ($$($1.srcdir),$$($1.location))
       $$(call mk-debug,Adding vpath: $$($1.build-dir)/$$($1.location)/% $$($1.srcdir))
@@ -39,7 +42,6 @@ define mk-emit-std-rules-aux
       $$(call mk-emit-pattern-rules,$$($1.lang))
     endif
   endif
-  $$(call mk-debug,Sources done)
 
   # Link files
   $1.ldlibs := $$(foreach tgt,$$($1.all-required),$$($$(tgt).link))
@@ -58,22 +60,19 @@ define mk-emit-std-rules-aux
   # First we put them in "link order".
   $$($1.target): $$($1.all-objs) $$($1.ldlibs) | $$$$(@D)/.
     ifneq ($$(strip $$($1.all-objs) $$($1.ldlibs)),)
-	$$(call mk-do,link,Linking $$@,mk-bblue)\
+	$$(call mk-do,link,Linking $$(subst $$($1.build-dir),(BIN),$$@),mk-byellow)\
 	$$(mk-toolset-link)
     endif
 endef
 mk-emit-std-rules = $(eval $(call mk-emit-std-rules-aux,$1))
 
 define mk-resolve-std-aux
-  $$(call mk-resolve-pulled-flag,$1,includes)
-  $$(call mk-resolve-pulled-flag,$1,cxxflags)
+  $$(call mk-localize-pulled-flag,$1,includes)
   $$(call mk-resolve-pulled-flag,$1,cppflags)
   $$(call mk-resolve-pulled-flag,$1,ldflags)
   $$(call mk-resolve-pulled-flag,$1,ldlibs)  
   # Change include directories to they're relative to the top
-  $1.all-cppflags += \
-    $$(foreach dir,$$($1.all-includes),\
-      $$(mk.toolset.$$($1.lang).include-path)$$(call $1.from-here,$$(dir)))
+  $1.all-cppflags += $$(addprefix $$(mk.toolset.include-path),$$($1.all-includes))
 endef
 mk-resolve-std = $(eval $(call mk-resolve-std-aux,$1))
 

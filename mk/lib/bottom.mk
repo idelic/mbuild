@@ -35,27 +35,17 @@ include $(mk.mbuild.dir)/toolset.mk
 $(foreach 1,$(MK_ALL_TARGETS),$(mk-target-resolve))
 
 # ...then emit the actual targets
-$(foreach t,$(MK_ALL_TARGETS),$(call mk-target-emit,$t))
-
-# Finally, determine the default target.
-ifdef MK_LOCAL_DIR
-  MK_TARGET_ALL := $(filter $(MK_LOCAL_DIR)@% $(MK_LOCAL_DIR)/%,$(mk.targets.all))
-else
-  MK_TARGET_ALL := $(mk.targets.all)
+ifdef mk.mode.build
+  $(foreach t,$(MK_ALL_TARGETS),$(call mk-target-emit,$t))
+  $(call mk-run-hook,bottom)
+  define mk-define-top-target
+    .PHONY: $1
+    ifdef MK_LOCAL_DIR
+      $1: $$(filter $$(MK_LOCAL_DIR)@% $$(MK_LOCAL_DIR)/%,$$(mk.targets.$1))
+    else
+      $1: $$(mk.targets.$1)
+    endif
+  endef
+  $(foreach 1,$(call mk-in-vars,mk.targets.%),\
+    $(eval $(mk-define-top-target)))
 endif
-
-$(call mk-debug,MK_TARGET_ALL = $(MK_TARGET_ALL))
-
-$(call mk-run-hook,bottom)
-
-define mk-define-top-target
-  .PHONY: $1
-  ifdef MK_LOCAL_DIR
-    $1: $$(filter $$(MK_LOCAL_DIR)@% $$(MK_LOCAL_DIR)/%,$$(mk.targets.$1))
-  else
-    $1: $$(mk.targets.$1)
-  endif
-endef
-
-$(foreach t,$(call mk-in-vars,mk.targets.%),\
-  $(eval $(call mk-define-top-target,$t)))
