@@ -8,6 +8,7 @@ mk.cmd.mkdirp  := $(or $(MKDIR),mkdir) -p --
 mk.cmd.rmf     := $(or $(RM),rm -f) --
 mk.cmd.rmrf    := $(or $(RM),rm -f) -r -- 
 mk.cmd.lnsf    := $(or $(LN_S),ln -s) -f -- 
+mk.cmd.gawk    := $(or $(GAWK),gawk)
 
 # bin/gnu/
 MK_BUILD_DIR = \

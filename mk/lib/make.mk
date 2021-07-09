@@ -15,16 +15,23 @@ MK_LINE_HEAD = $(MK_SP2)[$(bold)$(green)%-6s$(normal)]
 MK_LINE_BODY = $(call $4,%s)
 MK_LINE_FOOT = $(bold)%*s$(normal)
 
+ifeq ($(call mk-find-in-path,$(mk.cmd.gawk)),)
+  mk-print-command = \
+    printf '$(MK_LINE_HEAD) $(MK_LINE_BODY)\n' \
+           '$(call mk-squote,$1)' '$(call mk-squote,$2)'
+else
 # $1=head $2=body $3=footer
-mk-print-command = \
-  gawk -v H='$1' -v B='$2' -v F='$3' -v COLS=$$(tput cols) '\
-    BEGIN { \
-      COLS -= length(B) + 14; if (COLS < 0) COLS = 0; \
-      printf "$(MK_LINE_HEAD) $(MK_LINE_BODY) $(MK_LINE_FOOT)\n", \
-        H, B, COLS, F \
-    }' /dev/null
-
-mk-step = printf '[%-6s] %s' '$1' '$2'
+  mk-print-command = \
+    gawk -v H='$(call mk-squote,$1)' \
+         -v B='$(call mk-squote,$2)' \
+         -v F='$(call mk-squote,$3)' \
+         -v COLS=$$(tput cols) '\
+      BEGIN { \
+        COLS -= length(B) + 14; if (COLS < 0) COLS = 0; \
+        printf "$(MK_LINE_HEAD) $(MK_LINE_BODY) $(MK_LINE_FOOT)\n", \
+          H, B, COLS, F \
+      }' /dev/null
+endif
 
 ifeq ($(MK_VERBOSE),1)
   # User wants to see commands without our extra noise
@@ -44,8 +51,8 @@ MAKEFLAGS += --no-print-directory
 	$(call mk-do,mkdir,Creating $(@D))\
 	$(mk.cmd.mkdirp)$(@D)
 
-$(mk.dir.mbuild)/%.mk :;
-%/local.mk :;
+#$(mk.dir.mbuild)/%.mk :;
+#%/local.mk :;
 
 define mk-make-noop
   .PHONY: $1

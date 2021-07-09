@@ -83,6 +83,12 @@ mk-boxed = \
   echo "$(blue)│$(bold)$(white)$$t$(normal)$(blue)│$(normal)"; \
   echo "$(blue)└$$s┘$(normal)"; echo
 
+mk-try-run = \
+  $(if $(shell $1 >/dev/null 2>&1 && echo "OK"),$2,$3)
+  
+mk-find-in-path = \
+  $(firstword $(wildcard $(addsuffix /$(firstword $1),$(subst :, ,$(PATH)))))
+
 define mk-copy-recursive
 define $1
 $2
@@ -93,6 +99,8 @@ mk-copy-var = $(eval \
   $(if $(filter simple,$(flavor $2)),\
     $1 := $(value $2),\
     $(call mk-copy-recursive,$1,$(value $2))))
+
+mk-warn = $(warning [$(call mk-bred,WARNING)] $1)
 
 ifeq ($(MK_DEBUG),1)
   # Use warning to get file + line number

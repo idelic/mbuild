@@ -9,11 +9,11 @@ mk.mbuild.dir := $(patsubst %/,%,$(dir $(MK_TOP_MK_)))
 # Our core goodies
 include $(mk.mbuild.dir)/functions.mk
 
-# Determine the build mode, make flags, etc
-include $(mk.mbuild.dir)/make.mk
-
 # Load all our configuration files
 include $(mk.mbuild.dir)/config.mk
+
+# Determine the build mode, make flags, etc
+include $(mk.mbuild.dir)/make.mk
 
 # Other facilities
 include $(mk.mbuild.dir)/terminal.mk

@@ -133,6 +133,17 @@ define mk-target-resolve-aux
   ifdef $1.goal
     $1.target := $$($1.build-dir)/$$($1.location)/$$($1.goal)
   endif
+  
+  ifdef $1.toolset
+    ifeq ($$($1.toolset),$$(MK_TOOLSET))
+      $1.buildable := 1
+    else
+      $$(call mk-warn,Target $1 is not buildable with toolset $$(call mk-bold,$$(MK_TOOLSET)))
+      $1.buildable :=
+    endif
+  else
+    $1.buildable := 1
+  endif
 
   ifdef $1.lang
     # Resolve compilation/linking flags
@@ -187,7 +198,7 @@ mk-target-resolve = $(eval $(call mk-target-resolve-aux,$1))
 ##########################################################################
 
 define mk-target-emit-aux
-  ifdef $1.target
+  ifneq ($$(and $$($1.target),$$($1.buildable)),)
     $$($1.target): MK_TARGET := $1
     $$($1.target): MK_KIND := $$($1.kind)
     $$($1.target): MK_LOCAL_LANG := $$($1.lang)
