@@ -6,6 +6,12 @@ MK_HELP_MK_ := $(lastword $(MAKEFILE_LIST))
 MK_HELP_PATH   ?= $(mk.mbuild.dir)/help
 MK_HELP_EXT    := pod
 MK_HELP_VIEWER := perldoc
+MK_HELP_VAR    ?= mk.help
+MK_HELP_VARDOC ?= MK_VARDOC
+
+# Shorthand
+H := $(MK_HELP_VAR)
+V := $(MK_HELP_VARDOC)
 
 ifdef mk.mode.help
   mk-show-vars = \
@@ -14,7 +20,7 @@ ifdef mk.mode.help
       $(eval len := $(call mk-max-length,$1,$(FMT_LEN)))\
       $(foreach t,$(sort $1),\
         printf '  $(bold)$(yellow)%-$(len)s$(normal) : %s\n' \
-          '$t' '$(or $(MK_VARDOC.$t),(undocumented))' && \
+          '$t' '$(or $($V.$t),(undocumented))' && \
         printf '  %-$(len)s   [$(bold)$(black)%s$(normal)]\n' \
           '' '$(if $(call mk-neq,undefined,$(origin $t)),$(value $t),$(red)--undefined--)' &&) echo)
 
@@ -22,31 +28,31 @@ ifdef mk.mode.help
     printf '  $(bold)$(yellow)%-$3s$(normal) : %s\n' '$(subst |, ,$1)' '$2'
 
   mk-help-topics = \
-    $(filter-out _%,$(patsubst mk.help[%][],%,$(call mk-vars-named,mk.help[%][])))
+    $(filter-out _%,$(patsubst $H[%][],%,$(call mk-vars-named,$H[%][])))
   
   mk-sub-topics = \
-    $(filter-out _%,$(patsubst mk.help[$1][%],%,$(call mk-vars-named,mk.help[$1][%])))
+    $(filter-out _%,$(patsubst $H[$1][%],%,$(call mk-vars-named,$H[$1][%])))
   
   mk-max-length = \
     $(or $2,$(shell echo "$1"|tr ' ' '\n'|awk 'length>N{N=length}END{print N}'))
 
   mk-show-topic = \
-    $(if $(mk.help[$1][]),\
-      $(call mk-boxed,$(mk.help[$1][])); \
-      $(if $(mk.help[$1][_top_]),echo '$(mk.help[$1][_top_])';) \
+    $(if $($H[$1][]),\
+      $(call mk-boxed,$($H[$1][])); \
+      $(if $($H[$1][_top_]),echo '$($H[$1][_top_])';) \
       $(eval len := $(call mk-max-length,$(call mk-sub-topics,$1),$(FMT_LEN)))\
       $(foreach t,$(call mk-sub-topics,$1),\
-        $(if $t,$(call mk-show-key,$t,$(mk.help[$1][$t]),$(len));))\
-      $(if $(mk.help[$1][_bottom_]),echo '$(mk.help[$1][_bottom_])',:) \
+        $(if $t,$(call mk-show-key,$t,$($H[$1][$t]),$(len));))\
+      $(if $($H[$1][_bottom_]),echo '$($H[$1][_bottom_])',:) \
       ,\
       echo "No help for <$1>"); echo; \
-      $(call mk-show-vars,$(mk.help[$1][_vars_]))
+      $(call mk-show-vars,$($H[$1][_vars_]))
     
   mk-show-topic-list = \
     $(call mk-boxed,Help topics (see "make help TOPIC")); \
     $(eval len := $(call mk-max-length,$(mk-help-topics),$(FMT_LEN)))\
     $(foreach t,$(mk-help-topics),\
-      printf '  $(bold)$(yellow)%-$(len)s$(normal) : %s\n' '$t' '$(mk.help[$t][])' &&) :; echo; \
+      printf '  $(bold)$(yellow)%-$(len)s$(normal) : %s\n' '$t' '$($H[$t][])' &&) :; echo; \
     $(call mk-show-topic,_help)
 
   mk-help-file = \
@@ -77,14 +83,14 @@ ifdef mk.mode.help
   # Locate all variables that begin with a prefix, excluding those under
   # MK_VARDOC.  
   mk-find-vars = \
-    $(filter-out MK_VARDOC.%,$(filter $(addsuffix %,$1),$(.VARIABLES)))
+    $(filter-out $V.%,$(filter $(addsuffix %,$1),$(.VARIABLES)))
 
   # Get the list of variables for a target.  If the argument is the name of
   # a target that defines variables, use that list.  Otherwise interpret the
   # argument as a prefix, and select all variables that start with that
   # prefix.
   mk-var-names = \
-    $(or $(mk.help[$1][_vars_]),$(call mk-find-vars,$1))
+    $(or $($H[$1][_vars_]),$(call mk-find-vars,$1))
 
   ifeq ($(MK_ARG_FIRST),vars)
     .PHONY: vars
@@ -92,13 +98,13 @@ ifdef mk.mode.help
     ifneq ($(MK_ARG_REST),)
 	@$(call mk-show-vars,$(call mk-var-names,$(MK_ARG_REST)))
     else
-	@$(call mk-show-vars,$(patsubst MK_VARDOC.%,%,$(call mk-vars-named,MK_VARDOC.%)))
+	@$(call mk-show-vars,$(patsubst $V.%,%,$(call mk-vars-named,$V.%)))
     endif
   endif
 
-  mk-help-topic = $(eval mk.help[$1][] := $2)$(eval _MK_HELP_TOPIC := $1)
-  mk-help-add   = $(eval mk.help[$(_MK_HELP_TOPIC)][$1] := $2)
-  mk-help-vars  = $(eval mk.help[$(_MK_HELP_TOPIC)][_vars_] := $1)
+  mk-help-topic = $(eval $H[$1][] := $2)$(eval _MK_HELP_TOPIC := $1)
+  mk-help-add   = $(eval $H[$(_MK_HELP_TOPIC)][$1] := $2)
+  mk-help-vars  = $(eval $H[$(_MK_HELP_TOPIC)][_vars_] := $1)
 
   mk.help[_help][] := Pseudo-targets to show help on various topics
   mk.help[_help][help|TOPIC...] := Show help on TOPIC

@@ -93,7 +93,7 @@ ifdef mk.mode.print
 	  $(if $(mk.targets.by-kind[$k]),\
 	    $(call mk-boxed,$(mk-$k.title) targets); \
 	    $(foreach t,$(mk.targets.by-kind[$k]),\
-	      printf '  $(call mk-byellow,%-24s) : %s\n' \
+	      printf '  $(call mk-byellow,%-24s) in %s\n' \
 	        '$t' '$(if $($t.location),$(call mk-bold,$($t.location)),$(call mk-bblue,*system*))';)echo;))\
 	echo; \
 	echo 'See "$(bold)make {info|show|expand}$(normal) $(under)TARGET$(normal)" for details.'; \

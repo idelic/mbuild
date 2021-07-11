@@ -100,7 +100,8 @@ mk-copy-var = $(eval \
     $1 := $(value $2),\
     $(call mk-copy-recursive,$1,$(value $2))))
 
-mk-warn = $(warning [$(call mk-bred,WARNING)] $1)
+mk-warn = $(warning [$(call mk-byellow,WARNING)] $1)
+mk-error = $(error [$(call mk-bred,ERROR)] $1)
 
 ifeq ($(MK_DEBUG),1)
   # Use warning to get file + line number

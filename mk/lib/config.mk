@@ -33,6 +33,13 @@ mk.mbuild.config := \
   $(mk.dir.config)/hosts/$(mk.mbuild.host).mk \
   $(mk.dir.config)/users/$(mk.mbuild.user).mk
 
+ifdef MK_FLAVOR
+  ifndef MK_FLAVOR_DIR
+    $(call mk-error,No flavor directory set)
+  endif
+  mk.mbuild.config += $(MK_FLAVOR_DIR)/f-$(MK_FLAVOR).mk
+endif
+
 # Now load them all. 
 -include $(mk.mbuild.config)
 

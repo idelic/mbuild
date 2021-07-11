@@ -113,6 +113,10 @@ mk-target-common-info = \
 mk-target-info = \
   $(if $(mk-$($1.kind).info),$(call mk-$($1.kind).info,$1),$(call mk-target-common-info,$1))  
 
+mk-meets-requirement = $(strip \
+  $(if $(and $($1.need-$2),$(call mk-neq,$($1.need-$2),$($3))),\
+    $(call mk-warn,Skipping target <$1> since it does not meet the <$2> requirement),1))
+
 ##########################################################################
 # Handles resolution of buildable targets (i.e. a target with a location).
 ##########################################################################
@@ -133,18 +137,12 @@ define mk-target-resolve-aux
   ifdef $1.goal
     $1.target := $$($1.build-dir)/$$($1.location)/$$($1.goal)
   endif
-  
-  ifdef $1.toolset
-    ifeq ($$($1.toolset),$$(MK_TOOLSET))
-      $1.buildable := 1
-    else
-      $$(call mk-warn,Target $1 is not buildable with toolset $$(call mk-bold,$$(MK_TOOLSET)))
-      $1.buildable :=
-    endif
-  else
-    $1.buildable := 1
-  endif
 
+  $1.buildable := $$(strip \
+    $$(and $$(call mk-meets-requirement,$1,toolset,MK_TOOLSET),\
+           $$(call mk-meets-requirement,$1,build-type,MK_BUILD_TYPE),\
+           $$(call mk-meets-requirement,$1,link-type,MK_LINK_TYPE)))
+   
   ifdef $1.lang
     # Resolve compilation/linking flags
     $$(call mk-lang-$$($1.lang).resolve-props,$1)
@@ -177,7 +175,7 @@ define mk-target-resolve-aux
   $1.all-dist-cleanable += $$($1.extra-dist-cleanable)  
   
   # Populate the lists with targets. We'll define them later.
-  ifdef $1.target
+  ifneq ($$(and $$($1.target),$$($1.buildable)),)
     mk.targets.clean += $$($1.location)@$1.clean      
     mk.targets.distclean += $$($1.location)@$1.distclean
     mk.targets.$$($1.kind) += $$($1.location)@$1    
