@@ -292,4 +292,14 @@ define mk-target-emit-aux
 endef
 mk-target-emit = $(eval $(call mk-target-emit-aux,$1))
 
+ifdef mk.mode.help
+  MK_VARDOC.MK_TOOLSET := Select the toolset to use
+  MK_VARDOC.MK_BUILD_TYPE := Select the default build type
+  MK_VARDOC.MK_LINK_TYPE := Select the default link type
+  mk.help[build][] := Targets to trigger builds
+  mk.help[build][exe] := Build executable targets only (and dependencies)
+  mk.help[build][lib] := Build library targets only
+  mk.help[build][_vars_] := MK_BUILD_TYPE MK_LINK_TYPE MK_TOOLSET
+endif
+
 endif # MK_TARGETS_MK_

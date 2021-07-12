@@ -96,7 +96,6 @@ ifeq ($(filter $(premake-targets),$(MAKECMDGOALS)),)
   # None of the targets defined here are mentioned on the command line. 
   # This is the common case of a user invoking the actual build.
   
-  # First turn ALL targets into no-ops.
   .PHONY: recurse
   $(MAKECMDGOALS) : recurse ; @:
   
