@@ -1,4 +1,8 @@
 
+ifndef MK_TARGETS_MK_
+
+MK_TARGETS_MK_ := $(lastword $(MAKEFILE_LIST))
+
 MK_LANG_DEFAULT ?= c++
 
 define mk-new-target-aux
@@ -22,13 +26,19 @@ define mk-new-target-aux
   LOCAL := $$($1.$2.local)
 endef
 
+# Define this as a simple variable, so it stays simple when we do '+='.
 mk.targets.registered :=
 
 mk-new-target = $(eval $(call mk-new-target-aux,$1,$2,$3))
 
-mk-new-exe = $(call mk-new-target,exe,$1,$2)
-mk-new-lib = $(call mk-new-target,lib,$1,$2)
+# Define the 'kind' constructors.
+$(foreach kind,$(MK_ALL_KINDS),\
+  $(eval mk-new-$(kind) = $$(call mk-new-target,$(kind),$$1,$$2)))
 
+# If MK_WITH_SYMLINK_TARGET is set to 1, we symlink linked artifacts to
+# their location in the build directory.  This is only for convenience
+# during development. The symlinks are removed on 'make clean'.
+#
 ifeq ($(MK_WITH_SYMLINK_TARGET),1)
   mk-symlink-target = \
     $(mk.cmd.lnsf)$(call mk-to-top,$(HERE))/$@ $(HERE)/$(@F)
@@ -36,15 +46,17 @@ else
   mk-symlink-target = :
 endif
 
-# The 3-step process of creating a target:
+# $(call mk-resolve-pulled-flag,TARGET,PROPERTY)
+# ----------------------------------------------
+# Resolve a property starting from a target and recursing into its pulled
+# targets.
 #
-# 1. Registration: The target is added to the build machinery.
+# Example:
+#   The following expands to the 'cppflags' property of target $1, together
+#   with the value of 'pull-cppflags' in targets pulled by $1, and in
+#   targets pulled by those, recursively:
 #
-# 2. Resolution: All inter-target dependencies are resolved.
-#
-# 3. Generation: Actual targets and their rules are generated.
-
-# $(call mk-resolve-pulled-flag,TARGET,SELF_FLAG,PULL_FLAG)
+#   $1.all-cppflags := $(call mk-resolve-pulled-flag,$1,cppflags)
 #
 define mk-resolve-pulled-flag-aux
   $1.all-$2 = $$(strip $$(foreach r,$$($1.all-required),$$($$(r).$(or $3,pull-$2))) $$($1.$2))
@@ -52,12 +64,28 @@ define mk-resolve-pulled-flag-aux
 endef
 mk-resolve-pulled-flag = $(eval $(call mk-resolve-pulled-flag-aux,$1,$2,$3))
 
+# $(call mk-resolve-pulled-flag,TARGET,PROPERTY)
+# ----------------------------------------------
+# Like the above, but for properties that contain location-relative values. 
+# Each property is localized relative to the target that defines it,
+# recursively.
+#
+# Example:
+#   $1.all-includes := $(call mk-localize-pulled-flag,$1,includes)
+#
 define mk-localize-pulled-flag-aux
-  $1.all-$2 = $$(strip $$(foreach r,$$($1.all-required),$$(call $$(r).from-here,$$($$(r).$(or $3,pull-$2)))) $$($1.$2))
+  $1.all-$2 = $$(strip \
+    $$(foreach r,$$($1.all-required),$$(call $$(r).from-here,$$($$(r).$(or $3,pull-$2)))) $$($1.$2))
   $$(call mk-lazify,$1.all-$2)
 endef
 mk-localize-pulled-flag = $(eval $(call mk-localize-pulled-flag-aux,$1,$2,$3))
 
+# $(call mk-find-sources,TARGET)
+# ------------------------------
+# Locate the source files for a target, starting from the value of the
+# 'srcdir' property.  The list of source file suffixes is specific to the
+# target's language.
+#
 mk-find-sources = \
   $(call mk-find-files,$($1.srcdir),$(addprefix *,$(mk-lang-$($1.lang).srcext)))
 
@@ -127,6 +155,7 @@ define mk-target-resolve-aux
   else
     $1.srcdir := $$(call $1.from-here,$$($1.srcdir))
   endif
+
   ifndef $1.build-dir
     $1.build-dir := $$(MK_BUILD_DIR)
   else
@@ -156,6 +185,13 @@ define mk-target-resolve-aux
     # Object files, if any
     $1.objs := $$(call mk-$$($1.kind).objs,$1,$$($1.all-sources))
     $1.all-objs := $$($1.objs) $$($1.extra-objs)
+  endif
+  
+  $1.all-source-prereqs := \
+    $$(call mk-resolve-pulled-flags,$1,source-prereqs)
+  
+  if ($$(and $$($1.source-prereqs),$$($1.all-sources)),)
+    $$($1.all-sources) : $$($1.all-source-prereqs)
   endif
   
   ifdef $1.cleanable
@@ -256,3 +292,5 @@ define mk-target-emit-aux
   endif
 endef
 mk-target-emit = $(eval $(call mk-target-emit-aux,$1))
+
+endif # MK_TARGETS_MK_
