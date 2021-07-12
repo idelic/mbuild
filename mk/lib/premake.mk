@@ -36,7 +36,6 @@ print-help = \
 ifdef MK_FLAVOR_DIR
   export MK_FLAVOR_DIR
   all-flavors := $(patsubst f-%.mk,%,$(notdir $(wildcard $(MK_FLAVOR_DIR)/f-*.mk)))
-  $(info all-flavors = $(all-flavors))
   ifneq ($(all-flavors),)
     # Define each flavor as a premake target
     $(foreach f,$(all-flavors),\
