@@ -22,7 +22,7 @@ include $(mk.mbuild.dir)/include.mk
 #include $(mk.mbuild.dir)/clean.mk
 
 # Get the target machinery going
-include $(wildcard $(mk.mbuild.dir)/kind/*.mk)
+include $(mk.mbuild.dir)/kind.mk
 include $(mk.mbuild.dir)/targets.mk
 include $(mk.mbuild.dir)/help.mk
 include $(mk.mbuild.dir)/print.mk
