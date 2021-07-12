@@ -1,0 +1,3 @@
+
+MK_WITH_SYMLINK_TARGET := 1
+

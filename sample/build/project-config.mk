@@ -1,8 +1,0 @@
-# Project config here
-
-MK_WITH_LINK_ORIGIN := 1
-MK_WITH_LINK_BUILDID := 1
-MK_WITH_SYMLINK_TARGET := 1
-
-
-
