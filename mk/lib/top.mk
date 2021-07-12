@@ -12,6 +12,8 @@ include $(mk.mbuild.dir)/functions.mk
 # Load all our configuration files
 include $(mk.mbuild.dir)/config.mk
 
+include $(mk.mbuild.dir)/origin.mk
+
 # Determine the build mode, make flags, etc
 include $(mk.mbuild.dir)/make.mk
 
