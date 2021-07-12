@@ -7,7 +7,7 @@ MK_LANG_DEFAULT ?= c++
 
 define mk-new-target-aux
   ifdef $1.$2.name
-    $$(error Duplicate definition for target <$1>: Here ($$(HERE)) and in <$$($1.location)>)
+    $$(call mk-error,Duplicate definition for target <$1>: Here ($$(HERE)) and in <$$($1.$2.location)>)
   endif
   $1.$2.name     := $2
   $1.$2.location := $$(HERE)
@@ -75,7 +75,7 @@ mk-resolve-pulled-flag = $(eval $(call mk-resolve-pulled-flag-aux,$1,$2,$3))
 #
 define mk-localize-pulled-flag-aux
   $1.all-$2 = $$(strip \
-    $$(foreach r,$$($1.all-required),$$(call $$(r).from-here,$$($$(r).$(or $3,pull-$2)))) $$($1.$2))
+    $$(foreach r,$$($1.all-required),$$(call $$(r).from-here,$$($$(r).$(or $3,pull-$2)))) $$(call $1.from-here,$$($1.$2)))
   $$(call mk-lazify,$1.all-$2)
 endef
 mk-localize-pulled-flag = $(eval $(call mk-localize-pulled-flag-aux,$1,$2,$3))
@@ -186,11 +186,10 @@ define mk-target-resolve-aux
     $1.objs := $$(call mk-$$($1.kind).objs,$1,$$($1.all-sources))
     $1.all-objs := $$($1.objs) $$($1.extra-objs)
   endif
+
+  $1.all-source-prereqs := $$(call mk-localize-pulled-flags,$1,source-prereqs)
   
-  $1.all-source-prereqs := \
-    $$(call mk-resolve-pulled-flags,$1,source-prereqs)
-  
-  if ($$(and $$($1.source-prereqs),$$($1.all-sources)),)
+  ifeq ($$(and $$($1.all-source-prereqs),$$($1.all-sources)),)
     $$($1.all-sources) : $$($1.all-source-prereqs)
   endif
   
