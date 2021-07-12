@@ -12,7 +12,7 @@ mk.cmd.gawk    := $(or $(GAWK),gawk)
 
 # bin/gnu/
 MK_BUILD_DIR = \
-  $(MK_BUILD_TOP)/$(MK_BUILD_TYPE)/$(MK_LINK_TYPE)/$(mk.toolset.tag)/$(mk.mbuild.os)-$(mk.mbuild.arch)
+  $(MK_BUILD_TOP)/$(MK_BUILD_TYPE)/$(MK_LINK_TYPE)/$(mk.toolset.tag)$(if $(MK_FLAVOR),-$(MK_FLAVOR))/$(mk.mbuild.os)-$(mk.mbuild.arch)
 
 ifdef mk.mode.help
   MK_VARDOC.MK_BUILD_OS   := OS name (as in uname -s)
