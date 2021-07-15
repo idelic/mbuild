@@ -42,13 +42,16 @@ else
   mk-do = @$(call mk-print-command,$1,$2,$(MK_TARGET),$(or $3,mk-normal));
 endif
 
+mk-show-bin = \
+  $(subst $($(MK_TARGET).build-dir),(BIN),$(or $1,$@))
+
 # Keep things quiet
 MAKEFLAGS += --no-print-directory
 
 # Create target directories automagically
 .PRECIOUS: %/.
 %/.:
-	$(call mk-do,mkdir,Creating $(@D))\
+	$(call mk-do,mkdir,Creating $(call mk-show-bin,$(@D)))\
 	$(mk.cmd.mkdirp)$(@D)
 
 #$(mk.dir.mbuild)/%.mk :;

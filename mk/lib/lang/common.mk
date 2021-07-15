@@ -3,6 +3,24 @@ ifndef MK_LANG_COMMON_MK_
 
 MK_LANG_COMMON_MK_ := $(lastword $(MAKEFILE_LIST))
 
+ifdef MK_WITH_COMMAND_DEPENDENCIES
+  mk-command-changed = $(call mk-neq,$1,$(mk_cmd.$@))
+  mk-command-file = $(basename $@).d
+  mk-command-run = \
+    $(call mk-do,$2,$3,$4)$1 && echo "mk_cmd.$@ := $(strip $1)" >> $(mk-command-file)
+  
+  mk-maybe-run = \
+    $(if $(or $(filter-out MK_FORCED,$?),\
+              $(call mk-command-changed,$(strip $1))),\
+      $(call mk-command-run,$1,$2,$3),\
+      $(mk.quiet): not rebuilding $@)
+  .PHONY: MK_FORCED
+  MK_FORCED := MK_FORCED
+else
+  mk-maybe-run = $(call mk-do,$2,$3,$4)$1
+  MK_FORCED :=
+endif
+
 mk-lang-info = \
   $(info $(call mk-bold,  name)   : $(mk-lang-$1.name))\
   $(info $(call mk-bold,  srcext) : $(mk-lang-$1.srcext))
@@ -12,12 +30,10 @@ define mk-emit-pattern-rule-aux
   $$(call mk-debug,mk-emit-pattern-rule($1,$2,$3,$4))
   ifndef mk-rules-$1$2[$3]
     mk-rules-$1$2[$3] := 1
-    $(if $4,$4/)%$1: %$2 | $$$$(@D)/.
-	$$(call mk-do,$3,Compiling $$<)\
-	$$(mk-toolset-compile)
-    $(if $4,$4/)%.i: %.$2 | $$$$(@D)/.
-	$$(call mk-do,$3,Preprocessing $$<)\
-	$$(mk-toolset-preprocess)
+    $(if $4,$4/)%$1: %$2 $$(MK_FORCED) | $$$$(@D)/.
+	$$(call mk-maybe-run,$$(mk-toolset-compile),$3,Compiling $$<)
+    $(if $4,$4/)%.i: %.$2 $$(MK_FORCED) | $$$$(@D)/.
+	$$(call mk-maybe-run,$$(mk-toolset-preprocess),$3,Preprocessing $$<)
   endif
 endef
 mk-emit-pattern-rule = $(eval $(call mk-emit-pattern-rule-aux,$1,$2,$3,$4))
@@ -58,10 +74,10 @@ define mk-emit-std-rules-aux
   # arguments we need to pass to the linker to link them in.
   #
   # First we put them in "link order".
-  $$($1.target): $$($1.all-objs) $$($1.ldlibs) | $$$$(@D)/.
+  $$($1.target): $$($1.all-objs) $$($1.ldlibs) $$(MK_FORCED) | $$$$(@D)/.
     ifneq ($$(strip $$($1.all-objs) $$($1.ldlibs)),)
-	$$(call mk-do,link,Linking $$(subst $$($1.build-dir),(BIN),$$@),mk-byellow)\
-	$$(mk-toolset-link) && $$(mk-symlink-target)
+	$$(call mk-maybe-run,$$(mk-toolset-link),link,Linking $$(mk-show-bin),mk-byellow) \
+    	&& $$(mk-symlink-target)
     endif
 endef
 mk-emit-std-rules = $(eval $(call mk-emit-std-rules-aux,$1))
@@ -75,5 +91,12 @@ define mk-resolve-std-aux
   $1.all-cppflags += $$(addprefix $$(mk.toolset.include-path),$$($1.all-includes))
 endef
 mk-resolve-std = $(eval $(call mk-resolve-std-aux,$1))
+
+ifdef mk.mode.help
+  MK_VARDOC.MK_WITH_COMMAND_DEPENDENCIES := Rebuild targets when their commands change  
+  MK_VARDOC.MK_WITH_LINK_ORIGIN := Add $$ORIGIN as rpath in executables
+  MK_VARDOC.MK_WITH_BUILDID := Add a build ID to executables
+  MK_VARDOC.MK_WITH_CXX11_ABI := Use a C++ ABI compatible with C++11
+endif
 
 endif # MK_LANG_COMMON_MK_
