@@ -20,7 +20,7 @@ ifdef mk.mode.help
       $(eval len := $(call mk-max-length,$1,$(FMT_LEN)))\
       $(foreach t,$(sort $1),\
         printf '  $(bold)$(yellow)%-$(len)s$(normal) : %s\n' \
-          '$t' '$(or $($V.$t),(undocumented))' && \
+          '$t' '$(call mk-squote,$(or $($V.$t),(undocumented)))' && \
         printf '  %-$(len)s   [$(bold)$(black)%s$(normal)]\n' \
           '' '$(if $(call mk-neq,undefined,$(origin $t)),$(call mk-squote,$(value $t)),$(red)--undefined--)' &&) echo)
 
@@ -39,11 +39,11 @@ ifdef mk.mode.help
   mk-show-topic = \
     $(if $($H[$1][]),\
       $(call mk-boxed,$($H[$1][])); \
-      $(if $($H[$1][_top_]),echo '$($H[$1][_top_])';) \
+      $(if $($H[$1][_top_]),echo '$(call mk-squote,$($H[$1][_top_]))'; echo;) \
       $(eval len := $(call mk-max-length,$(call mk-sub-topics,$1),$(FMT_LEN)))\
       $(foreach t,$(call mk-sub-topics,$1),\
         $(if $t,$(call mk-show-key,$t,$($H[$1][$t]),$(len));))\
-      $(if $($H[$1][_bottom_]),echo '$($H[$1][_bottom_])',:) \
+      $(if $($H[$1][_bottom_]),echo;echo '$(call mk-squote,$($H[$1][_bottom_]))',:) \
       ,\
       echo "No help for <$1>"); echo; \
       $(call mk-show-vars,$($H[$1][_vars_]))
@@ -118,10 +118,10 @@ ifdef mk.mode.help
   mk.help[clean][clean] := Clean up built targets
   mk.help[clean][distclean] := Like clean, but remove files generated during configuration
   
-  mk.help[install][] := Targets to install artifacts
-  mk.help[install][install-exe] := Install executables
+  mk.help[install][] := Targets to install artifacts (not implemented yet)
+  mk.help[install][install-exe] := Install executables 
   mk.help[install][install-lib] := Install libraries
-  mk.help[install][install-data] := Install data files
+  mk.help[install][install-data] := Install data files 
   
   MK_VARDOC.MK_ROOT_DIR := Root directory for source tree
 endif

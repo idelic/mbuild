@@ -268,7 +268,8 @@ ifdef mk.mode.help
   mk.help[build][] := Targets to trigger builds
   mk.help[build][exe] := Build executable targets only (and dependencies)
   mk.help[build][lib] := Build library targets only
-  mk.help[build][_vars_] := MK_BUILD_TYPE MK_LINK_TYPE MK_TOOLSET MK_WITH_LINK_ORIGIN MK_WITH
+  mk.help[build][_vars_] := MK_BUILD_TYPE MK_LINK_TYPE MK_TOOLSET 
+  mk.help[build][_bottom_] := See 'help config' for variables that affect builds.
   
   mk.help[config][] := Variables that alter the build
   mk.help[config][_vars_] = $(addprefix MK_WITH_,$(call mk-in-vars,MK_VARDOC.MK_WITH_%))
