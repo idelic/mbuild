@@ -22,7 +22,7 @@ ifdef mk.mode.help
         printf '  $(bold)$(yellow)%-$(len)s$(normal) : %s\n' \
           '$t' '$(or $($V.$t),(undocumented))' && \
         printf '  %-$(len)s   [$(bold)$(black)%s$(normal)]\n' \
-          '' '$(if $(call mk-neq,undefined,$(origin $t)),$(value $t),$(red)--undefined--)' &&) echo)
+          '' '$(if $(call mk-neq,undefined,$(origin $t)),$(call mk-squote,$(value $t)),$(red)--undefined--)' &&) echo)
 
   mk-show-key = \
     printf '  $(bold)$(yellow)%-$3s$(normal) : %s\n' '$(subst |, ,$1)' '$2'
