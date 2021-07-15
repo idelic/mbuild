@@ -68,6 +68,10 @@ define MK_PREMAKE.help
     endif
     
     ifneq ($$(all-variants),)
+      $$(info $$(bold)Targets for variants$$(normal))
+      $$(call print-help,show-variants,Print all build variants)
+      $$(call print-help,variants,Build all variants)
+      $$(info )
       $$(info $$(bold)Defined build variants$$(normal))
       $$(foreach var,$$(all-variants),\
         $$(call print-help,$$(var),$$(MK_VARIANT.$$(var))))
