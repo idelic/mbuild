@@ -35,17 +35,6 @@ mk-new-target = $(eval $(call mk-new-target-aux,$1,$2,$3))
 $(foreach kind,$(MK_ALL_KINDS),\
   $(eval mk-new-$(kind) = $$(call mk-new-target,$(kind),$$1,$$2)))
 
-# If MK_WITH_SYMLINK_TARGET is set to 1, we symlink linked artifacts to
-# their location in the build directory.  This is only for convenience
-# during development. The symlinks are removed on 'make clean'.
-#
-ifeq ($(MK_WITH_SYMLINK_TARGET),1)
-  mk-symlink-target = \
-    $(mk.cmd.lnsf)$(call mk-to-top,$(HERE))/$@ $(HERE)/$(@F)
-else
-  mk-symlink-target = :
-endif
-
 # $(call mk-resolve-pulled-flag,TARGET,PROPERTY)
 # ----------------------------------------------
 # Resolve a property starting from a target and recursing into its pulled

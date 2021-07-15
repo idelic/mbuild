@@ -1,4 +1,15 @@
 
+# If MK_WITH_SYMLINK_TARGET is set to 1, we symlink linked artifacts to
+# their location in the build directory.  This is only for convenience
+# during development. The symlinks are removed on 'make clean'.
+#
+ifeq ($(MK_WITH_SYMLINK_TARGET),1)
+  mk-symlink-target = \
+    $(mk.cmd.lnsf)$(call mk-to-top,$(HERE))/$@ $(HERE)/$(@F)
+else
+  mk-symlink-target = :
+endif
+
 # Collect all the sub-directories that will participate in the build
 ifeq ($(MK_SUBDIRS),)
   MK_SUBDIRS := $(patsubst ./%/,%,$(dir $(call mk-find-files,.,local.mk)))

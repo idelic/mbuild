@@ -27,6 +27,6 @@ ifneq ($(ROOT_DIR),$(CURDIR))
 else
   # We're at the top of the tree
   include $(MK_MBUILD_DIR)/top.mk
-  include $(MK_ROOT_MAKE)
+  include $(ROOT_DIR)/$(MK_ROOT_FILE)
   include $(MK_MBUILD_DIR)/bottom.mk
 endif
