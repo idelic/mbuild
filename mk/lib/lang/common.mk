@@ -3,17 +3,65 @@ ifndef MK_LANG_COMMON_MK_
 
 MK_LANG_COMMON_MK_ := $(lastword $(MAKEFILE_LIST))
 
-ifdef MK_WITH_COMMAND_DEPENDENCIES
-  mk-command-changed = $(call mk-neq,$1,$(mk_cmd.$@))
+ifdef MK_WITH_CHANGE_TRACKING
+  # Compute the hash for a single file
+  mk-hash-file = $(strip $(firstword $(shell sha1sum $1)))
+
+  # Compute the hash for a single file if we haven't computed it yet.
+  mk-compute-hash = \
+    $(if $(mk_hash_.$1),,$(eval mk_hash_.$1 := $$(call mk-hash-file,$1)))
+    
+  # File we write check variables to
   mk-command-file = $(basename $@).d
-  mk-command-run = \
-    $(call mk-do,$2,$3,$4)$1 && echo "mk_cmd.$@ := $(strip $1)" >> $(mk-command-file)
+
+  # True if the argument does not exist on the filesystem.  
+  mk-if-missing = $(if $(wildcard $1),,$(true))
   
+  # If-changed check for 'stamp'
+  mk-if-changed.stamp = $(filter-out MK_FORCED,$?)
+  
+  # If-changed check for 'command'
+  mk-if-changed.command = $(call mk-neq,$(strip $1),$(mk_cmd.$@))
+  
+  # If-changed check for 'hash'
+  mk-if-changed.hash = $(strip \
+    $(foreach file,$(wildcard $^),\
+      $(call mk-compute-hash,$(file))\
+      $(call mk-neq,$(mk_hash_.$(file)),$(mk_hash.$(file)))))
+
+  # Combined if-changed check, using the selected checks
+  mk-if-changed = $(strip \
+    $(call mk-if-missing,$@)\
+    $(foreach check,$(MK_WITH_CHANGE_TRACKING),$(call mk-if-changed.$(check),$1)))
+
+  # Post-run commands for 'stamp' -- empty
+  mk-post-run.stamp := :
+  
+  # Post-run commands for 'command' -- save the command line used to build
+  # the target.
+  mk-post-run.command = \
+    echo 'mk_cmd.$@ := $(call mk-squote,$(strip $1))'
+  
+  # Post-run commands for 'hash' -- save the hash for all prerequisites.  
+  mk-post-run.hash = \
+    $(foreach file,$(wildcard $^),echo 'mk_hash.$(file) := $(mk_hash_.$(file))' &&) :
+
+  # Combined post-run command for all selected checks.
+  mk-post-run = ( \
+    $(foreach check,$(MK_WITH_CHANGE_TRACKING),$(call mk-post-run.$(check),$1) &&) : \
+  ) $(or $(MK_DEP_WRITE),>>) $(mk-command-file)
+
+  # Run the command for a recipe and invoke the post-run commands.
+  mk-run-command = \
+    $(call mk-do,$2,$3,$4)$1 && $(call mk-post-run,$1)
+
+  # Main entry point.  If any of the selected checks fail, run the build
+  # command and all post-run commands.    
   mk-maybe-run = \
-    $(if $(or $(filter-out MK_FORCED,$?),\
-              $(call mk-command-changed,$(strip $1))),\
-      $(call mk-command-run,$1,$2,$3),\
+    $(if $(call mk-if-changed,$1),\
+      $(call mk-run-command,$1,$2,$3),\
       $(mk.quiet): not rebuilding $@)
+
   .PHONY: MK_FORCED
   MK_FORCED := MK_FORCED
 else
@@ -74,6 +122,7 @@ define mk-emit-std-rules-aux
   # arguments we need to pass to the linker to link them in.
   #
   # First we put them in "link order".
+  $$($1.target): private MK_DEP_WRITE := >
   $$($1.target): $$($1.all-objs) $$($1.ldlibs) $$(MK_FORCED) | $$$$(@D)/.
     ifneq ($$(strip $$($1.all-objs) $$($1.ldlibs)),)
 	$$(call mk-maybe-run,$$(mk-toolset-link),link,Linking $$(mk-show-bin),mk-byellow) \
