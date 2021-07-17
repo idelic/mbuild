@@ -151,6 +151,19 @@ mk-try-run = \
 mk-find-in-path = \
   $(firstword $(wildcard $(addsuffix /$(firstword $1),$(subst :, ,$(or $2,$(PATH))))))
 
+mk-max-length = \
+  $(or $2,$(shell echo "$1"|tr ' ' '\n'|awk 'length>N{N=length}END{print N}'))
+
+mk-load-required = \
+  $(if $2,$(call mk-include,$2),$(call mk-error,Required library '$1' not found))
+
+mk-lib-file = \
+  $(firstword $(wildcard $(addsuffix /$1.mk,$(MK_LIB_DIRS))))
+
+mk-require-lib = \
+  $(foreach lib,$1,\
+    $(call mk-load-required,$(lib),$(call mk-lib-file,$(lib))))
+
 # Copy a recursive variable
 define mk-copy-recursive
 define $1

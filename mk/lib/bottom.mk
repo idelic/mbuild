@@ -14,6 +14,10 @@ endif
 
 include $(mk.mbuild.dir)/emit.mk
 
+ifdef MK_REQUIRED_LIBRARIES
+  $(call mk-require-lib,$(MK_REQUIRED_LIBRARIES))
+endif
+
 # Include all the local build files
 $(foreach dir,$(MK_SUBDIRS),$(call mk-include,$(dir)/local.mk))
 
@@ -32,7 +36,6 @@ MK_LANGUAGES := $(patsubst mk-languages.%,%,$(call mk-vars-named,mk-languages.%)
 
 # Then we load them
 include $(patsubst %,$(mk.mbuild.dir)/lang/%.mk,$(MK_LANGUAGES))
-$(call mk-debug,include $(patsubst %,$(mk.mbuild.dir)/lang/%.mk,$(MK_LANGUAGES)))
 
 # Load the toolset. This can use MK_LANGUAGES to set things up.
 include $(mk.mbuild.dir)/toolset.mk
@@ -40,10 +43,11 @@ include $(mk.mbuild.dir)/toolset.mk
 # Now we're ready to resolve target inter-dependencies
 $(foreach 1,$(MK_ALL_TARGETS),$(mk-target-resolve))
 
+$(foreach t,$(MK_ALL_TARGETS),$(call mk-target-emit,$t))
+$(call mk-run-hook,bottom)
+
 # ...then emit the actual targets
 ifdef mk.mode.build
-  $(foreach t,$(MK_ALL_TARGETS),$(call mk-target-emit,$t))
-  $(call mk-run-hook,bottom)
   define mk-define-top-target
     .PHONY: $1
     ifdef MK_LOCAL_DIR

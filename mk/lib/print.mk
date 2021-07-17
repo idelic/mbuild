@@ -52,6 +52,30 @@ ifdef mk.mode.print
 	@echo '$($(MK_ARG_REST))'
   endif
   
+  .PHONY: whatsin
+  whatsin:
+	$(mk.quiet)\
+	$(eval args := $(call mk-from-top,$(MK_ARG_REST)))\
+	$(eval dirs := $(strip $(foreach dir,$(call mk-in-vars,mk.targets[%]),\
+	  $(filter $(MK_ARG_REST) $(addsuffix /%,$(MK_ARG_REST)),$(dir)))))\
+	$(if $(word 2,$(dirs)),\
+	  $(eval len := $(call mk-max-length,$(dirs)))\
+	  $(foreach d,$(sort $(dirs)),\
+	    printf '$(bold)%-$(len)s$(normal) %s\n' '$d' '$(mk.targets[$d])';):\
+	  ,\
+	  echo '$(mk.targets[$(dirs)])'\
+	)
+
+  .PHONY: whatrequires
+  whatrequires:
+	$(mk.quiet)$(foreach t,$(MK_ARG_REST),\
+	  echo '$(mk-required-by[$t])';):
+
+  .PHONY: whatpulls
+  whatpulls:
+	$(mk.quiet)$(foreach t,$(MK_ARG_REST),\
+	  echo '$(mk-pulled-by[$t])';):
+	  
   ifeq ($(MK_ARG_FIRST),info)
     mk-var-info = \
       $(info $(call mk-bold,  name)      : $1)\
@@ -111,6 +135,10 @@ ifdef mk.mode.help
   $(call mk-help-add,xget|VAR...,Show the expansion of variable(s) VAR)
   $(call mk-help-add,info,Show targets and their location)
   $(call mk-help-add,info|NAME,Show a description of NAME)
+  $(call mk-help-add,whatsin|DIR...,Show targets defined at or under DIR)
+  $(call mk-help-add,whatrequires|TARGET...,Show targets that directly require TARGET)
+  $(call mk-help-add,whatpulls|TARGET...,Show targets that directly pull TARGET)
+  $(call mk-help-add,target|TARGET...,Show target-specific variables for TARGET)
 endif
 
 endif # MK_PRINT_MK_

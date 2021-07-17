@@ -68,9 +68,10 @@ mk-make-has-flag = $(findstring $1,$(firstword $(MAKEFLAGS)))
 # This checks for all flags
 mk-make-has-option = $(findstring --%1,$(MAKEFLAGS))
 
-mk.args.all   := print help
-mk.args.print := info show expand get xget
-mk.args.help  := help vars
+mk.args.all    := print help target
+mk.args.print  := info show expand get xget whatsin whatrequires whatpulls
+mk.args.help   := help vars
+mk.args.target := target
 
 MK_ARG_FIRST := $(firstword $(MAKECMDGOALS))
 MK_ARG_REST  := $(call mk-shift,$(MAKECMDGOALS))
@@ -83,6 +84,8 @@ $(foreach t,$(mk.args.all),\
 ifneq ($(mk.make.mode),)
   MK_BUILD_MODE := $(mk.make.mode)
   $(eval $(call mk-make-noop,$(MK_ARG_REST)))
+  .PHONY: $(mk.make.mode) target
+  target: ; @:
 else
   MK_BUILD_MODE := build
   mk.mode.build := 1

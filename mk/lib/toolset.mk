@@ -24,7 +24,9 @@ mk-toolset-compile = \
   $(mk.toolset.$(MK_LOCAL_LANG).compile)
 
 mk-toolset-link = \
-  $(call mk-run-if-nonempty,$(mk.toolset.$(MK_LOCAL_LANG).link-$(MK_KIND)),$(call mk-linkable,$^),: nothing to link for $(MK_TARGET))
+  $(mk.toolset.$(MK_LOCAL_LANG).link-$(MK_KIND))
+
+# $(call mk-run-if-nonempty,$(mk.toolset.$(MK_LOCAL_LANG).link-$(MK_KIND)),$(call mk-linkable,$^),: nothing to link for $(MK_TARGET))
 
 mk-toolset-preprocess = $(mk.toolset.$(MK_LOCAL_LANG).preprocess)
 

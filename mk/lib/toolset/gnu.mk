@@ -90,6 +90,9 @@ mk.toolset.c++.pflags.coverage = $(MK_GCC_COMMON_PFLAGS) $(MK_GCC_CPPFLAGS_COVER
 mk.toolset.c++.lflags.shared := -shared -o
 mk.toolset.c++.lflags.static := rcs
 
+mk.toolset.link-ldlibs-static :=
+mk.toolset.link-ldlibs-shared = $(MK_LOCAL_LDLIBS)
+
 mk.toolset.c++.compile = $(mk.toolset.c++.compiler) \
   $(mk.toolset.c++.cflags.$(MK_LOCAL_LINK_TYPE)) \
   $(mk.toolset.c++.cflags.$(MK_LOCAL_BUILD_TYPE)) \
@@ -101,11 +104,12 @@ mk.toolset.c++.preprocess = $(mk.toolset.c++.cpp) \
   $(mk.toolset.c++.pflags.$(MK_LOCAL_BUILD_TYPE)) $< -o $@
 
 mk.toolset.c++.link-exe = \
-  $(mk.toolset.c++.linker-exe) $(MK_LINK_EXE) $(MK_LDFLAGS) -o $@
+  $(mk.toolset.c++.linker-exe) $(MK_LINK_EXE) $(MK_LDFLAGS) -o $@ $(MK_LOCAL_OBJS) $(MK_LDLIBS)
 
 mk.toolset.c++.link-lib = \
   $(mk.toolset.c++.linker-$(MK_LOCAL_LINK_TYPE)) \
-  $(mk.toolset.c++.lflags.$(MK_LOCAL_LINK_TYPE)) $@
+  $(mk.toolset.c++.lflags.$(MK_LOCAL_LINK_TYPE)) $@ $(MK_LOCAL_OBJS) \
+  $(mk.toolset.link-ldlibs-$(MK_LOCAL_LINK_TYPE))
 
 ifeq ($(MK_WITH_CXX11_ABI),1)
   MK_CXX11_ABI := -D_GLIBCXX_USE_CXX11_ABI=1

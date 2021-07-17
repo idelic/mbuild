@@ -33,15 +33,12 @@ ifdef mk.mode.help
   mk-sub-topics = \
     $(filter-out _%,$(patsubst $H[$1][%],%,$(call mk-vars-named,$H[$1][%])))
   
-  mk-max-length = \
-    $(or $2,$(shell echo "$1"|tr ' ' '\n'|awk 'length>N{N=length}END{print N}'))
-
   mk-show-topic = \
     $(if $($H[$1][]),\
       $(call mk-boxed,$($H[$1][])); \
       $(if $($H[$1][_top_]),echo '$(call mk-squote,$($H[$1][_top_]))'; echo;) \
       $(eval len := $(call mk-max-length,$(call mk-sub-topics,$1),$(FMT_LEN)))\
-      $(foreach t,$(call mk-sub-topics,$1),\
+      $(foreach t,$(sort $(call mk-sub-topics,$1)),\
         $(if $t,$(call mk-show-key,$t,$($H[$1][$t]),$(len));))\
       $(if $($H[$1][_bottom_]),echo;echo '$(call mk-squote,$($H[$1][_bottom_]))',:) \
       ,\
@@ -101,7 +98,7 @@ ifdef mk.mode.help
 	@$(call mk-show-vars,$(patsubst $V.%,%,$(call mk-vars-named,$V.%)))
     endif
   endif
-
+  
   mk-help-topic = $(eval $H[$1][] := $2)$(eval _MK_HELP_TOPIC := $1)
   mk-help-add   = $(eval $H[$(_MK_HELP_TOPIC)][$1] := $2)
   mk-help-vars  = $(eval $H[$(_MK_HELP_TOPIC)][_vars_] := $1)

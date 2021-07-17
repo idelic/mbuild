@@ -110,11 +110,10 @@ define mk-emit-std-rules-aux
   # Link files
   $1.ldlibs := $$(foreach tgt,$$($1.all-required),$$($$(tgt).link))
 
-  $$($1.target): MK_LOCAL_CPPFLAGS := $$($1.all-cppflags)
-  $$($1.target): MK_LOCAL_LDFLAGS  := $$($1.all-ldflags)
-  $$($1.target): MK_LOCAL_LDLIBS   := $$($1.ldlibs)
-  $$($1.target): MK_LOCAL_OBJS     := $$($1.all-objs)
-  $$($1.target): $$($1.ldlibs)
+  $$($1.target): MK_LOCAL_CPPFLAGS := $$(strip $$($1.all-cppflags))
+  $$($1.target): MK_LOCAL_LDFLAGS  := $$(strip $$($1.all-ldflags))
+  $$($1.target): MK_LOCAL_LDLIBS   := $$(strip $$($1.ldlibs))
+  $$($1.target): MK_LOCAL_OBJS     := $$(strip $$($1.all-objs))
   
   # Link time!
   #
@@ -123,11 +122,19 @@ define mk-emit-std-rules-aux
   #
   # First we put them in "link order".
   $$($1.target): private MK_DEP_WRITE := >
-  $$($1.target): $$($1.all-objs) $$($1.ldlibs) $$(MK_FORCED) | $$$$(@D)/.
+  ifdef mk.mode.target
+    ifneq ($$(filter $1,$$(MK_ARG_REST)),)
+      $$($1.target)::
+	$$(mk.quiet)\
+	$$(call mk-show-target-vars,MK_LOCAL_CPPFLAGS MK_LOCAL_LDFLAGS MK_LOCAL_LDLIBS MK_LOCAL_OBJS)
+    endif
+  else
+    $$($1.target): $$($1.all-objs) $$$$(call mk-linkable,$$($1.ldlibs)) $$(MK_FORCED) | $$$$(@D)/.
     ifneq ($$(strip $$($1.all-objs) $$($1.ldlibs)),)
 	$$(call mk-maybe-run,$$(mk-toolset-link),link,Linking $$(mk-show-bin),mk-byellow) \
     	&& $$(mk-symlink-target)
     endif
+  endif
 endef
 mk-emit-std-rules = $(eval $(call mk-emit-std-rules-aux,$1))
 
@@ -140,6 +147,12 @@ define mk-resolve-std-aux
   $1.all-cppflags += $$(addprefix $$(mk.toolset.include-path),$$($1.all-includes))
 endef
 mk-resolve-std = $(eval $(call mk-resolve-std-aux,$1))
+
+define mk-resolve-link-aux
+  $$(call mk-resolve-pulled-flag,$1,ldflags)
+  $$(call mk-resolve-pulled-flag,$1,ldlibs)
+endef
+mk-resolve-link = $(eval $(call mk-resolve-link,$1))
 
 ifdef mk.mode.help
   MK_VARDOC.MK_WITH_COMMAND_DEPENDENCIES := Rebuild targets when their commands change  
