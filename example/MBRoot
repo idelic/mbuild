@@ -2,6 +2,12 @@
 # variables, create new targets, etc.  A common use case is to alter the
 # MK_SUBDIRS variable, or define MK_SUBDIRS_EXCLUDED.
 
+MK_LIB_DIRS := build/syslibs
+
+MK_REQUIRED_LIBRARIES := m
+
+MK_WITH_LINK_ORIGIN := 1
+MK_WITH_LINK_BUILDID := 1
 MK_WITH_CHANGE_TRACKING := hash
 
 # We want artifact symlinks.
