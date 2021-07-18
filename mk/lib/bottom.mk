@@ -1,3 +1,4 @@
+# This file actually loads he local makefiles and emits the targets.
 
 # Collect all the sub-directories that will participate in the build
 ifeq ($(MK_SUBDIRS),)
@@ -18,7 +19,7 @@ ifdef MK_REQUIRED_LIBRARIES
   $(call mk-require-lib,$(MK_REQUIRED_LIBRARIES))
 endif
 
-# Include all the local build files
+# Include all the local makefiles
 $(foreach dir,$(MK_SUBDIRS),$(call mk-include,$(dir)/local.mk))
 
 include $(mk.mbuild.dir)/kind.mk

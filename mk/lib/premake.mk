@@ -1,4 +1,3 @@
-
 THIS_FILE := $(realpath $(lastword $(MAKEFILE_LIST)))
 ROOT_DIR := $(dir $(abspath $(THIS_FILE)))
 TOP_MAKEFILE := $(firstword $(MAKEFILE_LIST))

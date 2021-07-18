@@ -68,17 +68,20 @@ mk-make-has-flag = $(findstring $1,$(firstword $(MAKEFLAGS)))
 # This checks for all flags
 mk-make-has-option = $(findstring --%1,$(MAKEFLAGS))
 
-mk.args.all    := print help target
-mk.args.print  := info show expand get xget whatsin whatrequires whatpulls
-mk.args.help   := help vars
-mk.args.target := target
+# Figure out the build "mode".  For example, when running help targets we're
+# in "help" mode.
+
+mk.modes.all    := print help target
+mk.modes.print  := info show expand get xget whatsin whatrequires whatpulls
+mk.modes.help   := help vars
+mk.modes.target := target
 
 MK_ARG_FIRST := $(firstword $(MAKECMDGOALS))
 MK_ARG_REST  := $(call mk-shift,$(MAKECMDGOALS))
 
 # Check if our first argument is special
-$(foreach t,$(mk.args.all),\
-  $(if $(filter $(mk.args.$t),$(MK_ARG_FIRST)),\
+$(foreach t,$(mk.modes.all),\
+  $(if $(filter $(mk.modes.$t),$(MK_ARG_FIRST)),\
     $(eval mk.make.mode := $t)$(eval mk.mode.$t := 1)))
 
 ifneq ($(mk.make.mode),)
