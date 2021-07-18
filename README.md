@@ -29,13 +29,13 @@ make.
   touching the build system.
 
 - **Distinction between *build* vs. *usage* requirements**: Each library 
-  defines the compiler and linker flags that `users` of the library need to
+  defines the compiler and linker flags that *users* of the library need to
   use.
 
 - **Transitive properties**: All target requirements are *transitive* and
   propagate automatically via `pull` properties.
 
-- **Introspection*: Query the dependency tree, examine all properties of
+- **Introspection**: Query the dependency tree, examine all properties of
   targets, extract values of any build variable. No need to duplicate
   variables between configuration and build files, or pass values via the
   environment.
