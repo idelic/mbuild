@@ -22,6 +22,12 @@ endif
 # Include all the local makefiles
 $(foreach dir,$(MK_SUBDIRS),$(call mk-include,$(dir)/local.mk))
 
+# After this point, there should be no reference these variables, other than
+# via target-specific variables.
+$(call mk-poison,THIS)
+$(call mk-poison,HERE)
+$(call mk-poison,THERE)
+
 include $(mk.mbuild.dir)/kind.mk
 
 MK_ALL_TARGETS := \
