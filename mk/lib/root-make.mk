@@ -12,7 +12,20 @@ mk-find-upwards = \
 # Directory containing the MBRoot file
 ROOT_DIR := $(strip $(call mk-find-upwards,$(CURDIR),$(MK_ROOT_FILE)))
 
-ifneq ($(ROOT_DIR),$(CURDIR))
+ifeq ($(ROOT_DIR),)
+  MK_TOP_DIR := $(dir $(abspath $(MK_TOP_MAKEFILE)))
+  # We're not in a sub-directory.  That means we're out of the source tree.
+  ifeq ($(wildcard $(MK_TOP_DIR)$(MK_ROOT_FILE)),)
+    # There's no MBRoot in the location of the Makefile either
+    $(error Can't find the source directory)
+  endif
+  # We're pointing to the root of the tree.  Assume our current directory is
+  # for artifacts.
+  $(MAKECMDGOALS): all ; @:
+  
+  .DEFAULT all:
+	+@$(MAKE) --no-print-directory -C $(MK_TOP_DIR) MK_BUILD_TOP=$(CURDIR) $(MAKECMDGOALS)
+else ifneq ($(ROOT_DIR),$(CURDIR))
   # We're in a sub-directory.  Restart the build from the top, but tell the
   # build system to restrict the build to targets under the local directory.
   .PHONY: all
