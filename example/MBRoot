@@ -2,7 +2,7 @@
 # variables, create new targets, etc.  A common use case is to alter the
 # MK_SUBDIRS variable, or define MK_SUBDIRS_EXCLUDED.
 
-MK_LIB_DIRS := build/syslibs
+MK_LIB_DIRS := ../mk/share
 
 MK_REQUIRED_LIBRARIES := m
 
