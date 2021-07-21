@@ -1,0 +1,159 @@
+#! /bin/bash
+
+set -u
+
+ME=$(basename -- "$0")
+
+say()
+{
+  echo "$ME: $@"
+}
+
+
+fatal()
+{ 
+  echo "$ME: Fatal: $@" >&2
+  exit 1
+}
+
+make_link()
+{
+  local dir=$1
+  local link="$dir/$target"
+  if test -e "$link"; then
+    # Out target already exists.  We only modify it if it's a broken
+    # symlink.
+    say "Ignoring <$link> sice it already exists"
+    return 1
+  elif test -L "$link"; then
+    # It's a symlink, but -e failed, so it's a dangling sylink
+    if $opt_fix_links; then
+      say "Fixing broken symlink <$link>"
+      $do rm -f -- "$link"
+    else
+      say "Ignoring broken symlink <$link> since 'fix' is not in effect"
+      return 1
+    fi
+  elif $opt_fix_links; then
+    say "Creating symlink <$link>"
+  fi
+  
+  # Split on slash
+  tdir=(${dir//\// })
+  
+  # Replace each component by ".."
+  udir=${tdir[@]//*/..}
+
+  $do ln -s -- "${udir[@]/ /\/}/$target" "$link"
+}
+
+rm_link()
+{
+  local dir=$1
+  local link="$dir/$target"
+  
+  if test -L "$link"; then
+    # Target is a symlink. Check that it points to the right place
+    to=$(readlink -e -- "$link")
+    if test "$to" = "$top_file"; then
+      say "Removing <$link>"
+      $do rm -f -- "$link"
+    else
+      say "Ignoring <$link> since it does not point to the target file"
+    fi
+  else
+    say "Ignoring <$link> since it is not a symlink"
+  fi
+}
+
+usage="
+Usage: $ME {create|remove} [OPTION(s)...]
+
+Options:
+    -n, --dry-run         Show commands without executing them
+    -m, --filename=FILE   Override the name of the target symlink
+    -F, --fix             Fix danlging symlinks (for 'create').
+        --follow          Follow symlinks when looking for local.mk files
+    -h, --help            Show this help
+
+A symlink is only only created if it doesn't already exist. The only exception is
+if it's dangling and 'fix' is used.
+
+Symlinks are only removed if they are actually symlinks and point to the top
+level target file.
+"
+
+test -f "MBRoot" || fatal "This script must be ran at the top of a source tree"
+
+# Check if we're on a 'premake' tree
+if test -f GNUmakefile; then
+  is_premake=true
+  target=GNUmakefile
+else
+  is_premake=false
+  target=Makefile
+fi
+
+do=
+opt_fix_links=false
+opt_force=false
+opt_follow=
+OPTIONS=$(getopt -o hnf: -l dry-run,help,follow,filename -- "$@")
+eval set -- "$OPTIONS"
+
+while :
+do
+  case $1 in
+  -n | --dry-run)
+    do=echo
+    ;;
+  -f | --filename)
+    shift
+    target=$1
+    ;;
+  -F | --fix)
+    opt_fix_links=true
+    ;;
+  --follow)
+    opt_follow=-follow
+    ;;
+  -h | --help)
+    echo "$usage"
+    exit 0
+    ;;
+  --)
+    shift
+    break
+    ;;
+  *)
+    ;;
+  esac
+  shift
+done
+
+if test -z "${1:-}"; then
+  echo "$usage"
+  exit 0
+fi
+
+case $1 in
+create)
+  what=make_link
+  ;;
+remove | rm)
+  what=rm_link
+  ;;
+*)
+  fatal "Command not understood"
+  ;;
+esac
+
+top_file=$(readlink -e -- "$target")
+
+# Locate the directories with 'local.mk' files
+local_mk=($(find . -name local.mk $opt_follow))
+
+for dir in ${local_mk[@]%/*}
+do
+  $what "${dir#./}"
+done
