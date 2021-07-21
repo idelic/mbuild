@@ -20,9 +20,8 @@ make_link()
 {
   local dir=$1
   local link="$dir/$target"
+
   if test -e "$link"; then
-    # Out target already exists.  We only modify it if it's a broken
-    # symlink.
     say "Ignoring <$link> sice it already exists"
     return 1
   elif test -L "$link"; then
@@ -34,7 +33,7 @@ make_link()
       say "Ignoring broken symlink <$link> since 'fix' is not in effect"
       return 1
     fi
-  elif $opt_fix_links; then
+  else
     say "Creating symlink <$link>"
   fi
   
@@ -44,13 +43,12 @@ make_link()
   # Replace each component by ".."
   udir=${tdir[@]//*/..}
 
-  $do ln -s -- "${udir[@]/ /\/}/$target" "$link"
+  $do ln -s -- "${udir[@]// /\/}/$target" "$link"
 }
 
 rm_link()
 {
-  local dir=$1
-  local link="$dir/$target"
+  local link="$1/$target"
   
   if test -L "$link"; then
     # Target is a symlink. Check that it points to the right place
@@ -67,11 +65,13 @@ rm_link()
 }
 
 usage="
-Usage: $ME {create|remove} [OPTION(s)...]
+Usage: $ME {-c|-r} [OPTION(s)...] [DIR=.]
 
 Options:
+    -c, --create          Create symlinks
+    -r, --remove          Remove symlinks
     -n, --dry-run         Show commands without executing them
-    -m, --filename=FILE   Override the name of the target symlink
+    -f, --filename=FILE   Override the name of the target symlink
     -F, --fix             Fix danlging symlinks (for 'create').
         --follow          Follow symlinks when looking for local.mk files
     -h, --help            Show this help
@@ -83,22 +83,12 @@ Symlinks are only removed if they are actually symlinks and point to the top
 level target file.
 "
 
-test -f "MBRoot" || fatal "This script must be ran at the top of a source tree"
-
-# Check if we're on a 'premake' tree
-if test -f GNUmakefile; then
-  is_premake=true
-  target=GNUmakefile
-else
-  is_premake=false
-  target=Makefile
-fi
-
 do=
 opt_fix_links=false
 opt_force=false
 opt_follow=
-OPTIONS=$(getopt -o hnf: -l dry-run,help,follow,filename -- "$@")
+opt_what=make_link
+OPTIONS=$(getopt -o Fcrhnf: -l dry-run,create,remove,help,fix,follow,filename -- "$@")
 eval set -- "$OPTIONS"
 
 while :
@@ -110,6 +100,12 @@ do
   -f | --filename)
     shift
     target=$1
+    ;;
+  -c | --create)
+    opt_what=make_link
+    ;;
+  -r | --remove)
+    opt_what=rm_link
     ;;
   -F | --fix)
     opt_fix_links=true
@@ -136,17 +132,21 @@ if test -z "${1:-}"; then
   exit 0
 fi
 
-case $1 in
-create)
-  what=make_link
-  ;;
-remove | rm)
-  what=rm_link
-  ;;
-*)
-  fatal "Command not understood"
-  ;;
-esac
+DIR=${1:-.}
+
+test -f "$DIR/MBRoot" || 
+  fatal "MBRoot file does not exist in $DIR"
+
+cd "$DIR" || exit 1
+
+# Check if we're on a 'premake' tree
+if test -f GNUmakefile; then
+  target=${target:-GNUmakefile}
+elif test -f Makefile; then
+  target=${target:-Makefile}
+else
+  fatal "No Makefile or GNUmakefile in $DIR"
+fi
 
 top_file=$(readlink -e -- "$target")
 
@@ -155,5 +155,5 @@ local_mk=($(find . -name local.mk $opt_follow))
 
 for dir in ${local_mk[@]%/*}
 do
-  $what "${dir#./}"
+  $opt_what "${dir#./}"
 done
