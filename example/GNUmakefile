@@ -5,4 +5,4 @@
 # Directory to load build flavors from.
 MK_FLAVOR_DIR := build/flavor
 
-include ../mk/lib/premake.mk
+include $(dir $(realpath $(lastword $(MAKEFILE_LIST))))../mk/lib/premake.mk
